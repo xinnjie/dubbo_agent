@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @RestController
 public class HelloController {
@@ -24,11 +23,30 @@ public class HelloController {
 
     private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
-    private List<Endpoint> endpoints = null;
+    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
+            new Endpoint("provider-large",30000),
+            new Endpoint("provider-medium",30000),
+            new Endpoint("provider-small",30000)));
     private Object lock = new Object();
     private OkHttpClient httpClient = new OkHttpClient();
 
+    private List<Endpoint> weightedEndpoints = null;
 
+    private Endpoint selectEndpoint() {
+        if (weightedEndpoints == null) {
+            List<Integer> weight = Arrays.asList(3,2,1);
+            assert endpoints.size()  == weight.size();
+            weightedEndpoints = new ArrayList<>();
+            for (int i = 0; i < weight.size(); ++i) {
+                for (int j = 0; j < weight.get(i); j++) {
+                    weightedEndpoints.add(endpoints.get(i));
+                }
+            }
+            weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
+        }
+        return weightedEndpoints.get(random.nextInt(endpoints.size()));
+
+    }
     @RequestMapping(value = "")
     public Object invoke(@RequestParam("interface") String interfaceName,
                          @RequestParam("method") String method,
@@ -62,9 +80,10 @@ public class HelloController {
         }
 
         // 简单的负载均衡，随机取一个
-        Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
+        Endpoint endpoint = selectEndpoint();
 
         String url =  "http://" + endpoint.getHost() + ":" + endpoint.getPort();
+//        logger.info("sending http request to " + url);
 
         RequestBody requestBody = new FormBody.Builder()
                 .add("interface",interfaceName)
