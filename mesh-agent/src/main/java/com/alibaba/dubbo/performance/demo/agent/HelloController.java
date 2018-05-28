@@ -37,7 +37,7 @@ public class HelloController {
             List<Integer> weight = Arrays.asList(3,2,1);
             assert endpoints.size()  == weight.size();
             weightedEndpoints = new ArrayList<>();
-            for (int i = 0; i < weight.size(); ++i) {
+            for (int i = 0; i < endpoints.size(); ++i) {
                 for (int j = 0; j < weight.get(i); j++) {
                     weightedEndpoints.add(endpoints.get(i));
                 }
@@ -82,6 +82,8 @@ public class HelloController {
         Endpoint endpoint = selectEndpoint();
 
         String url =  "http://" + endpoint.getHost() + ":" + endpoint.getPort();
+        logger.info("send to " + url);
+
 //        logger.info("sending http request to " + url);
 
         RequestBody requestBody = new FormBody.Builder()
