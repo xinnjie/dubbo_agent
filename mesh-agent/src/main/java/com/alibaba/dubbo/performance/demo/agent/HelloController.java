@@ -44,7 +44,7 @@ public class HelloController {
             }
             weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
         }
-        return weightedEndpoints.get(random.nextInt(endpoints.size()));
+        return weightedEndpoints.get(random.nextInt(weightedEndpoints.size()));
 
     }
     @RequestMapping(value = "")
@@ -79,7 +79,6 @@ public class HelloController {
             }
         }
 
-        // 简单的负载均衡，随机取一个
         Endpoint endpoint = selectEndpoint();
 
         String url =  "http://" + endpoint.getHost() + ":" + endpoint.getPort();
