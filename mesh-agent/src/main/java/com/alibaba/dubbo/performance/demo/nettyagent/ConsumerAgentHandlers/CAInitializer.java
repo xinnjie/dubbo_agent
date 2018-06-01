@@ -1,6 +1,5 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers;
 
-import com.alibaba.dubbo.performance.demo.agent.dubbo.RpcClient;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
