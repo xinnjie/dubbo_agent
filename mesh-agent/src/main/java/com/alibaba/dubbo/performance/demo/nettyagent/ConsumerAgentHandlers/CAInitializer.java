@@ -70,7 +70,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
         ChannelPipeline p = ch.pipeline();
         ChannelFuture providerChannelFuture = bootStrapProviderChannel(ch);
 
-        p.addLast("httpCodc", new HttpServerCodec());
+        p.addLast("httpCodec", new HttpServerCodec());
         p.addLast("aggregator", new HttpObjectAggregator(100000));
 
         /*

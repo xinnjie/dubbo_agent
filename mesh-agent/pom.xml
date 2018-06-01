@@ -109,7 +109,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>mesh-agent</finalName>
+                    <!--<finalName>mesh-agent</finalName>-->
 
                 </configuration>
                 <executions>
