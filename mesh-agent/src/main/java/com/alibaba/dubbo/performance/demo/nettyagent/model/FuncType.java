@@ -62,4 +62,12 @@ public class FuncType {
         result = 31 * result + (parameterTypes != null ? parameterTypes.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "FuncType{" +
+                "methodName='" + methodName + '\'' +
+                ", parameterTypes='" + parameterTypes + '\'' +
+                '}';
+    }
 }

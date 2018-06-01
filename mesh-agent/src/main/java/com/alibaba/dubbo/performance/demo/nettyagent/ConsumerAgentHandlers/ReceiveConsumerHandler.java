@@ -7,6 +7,8 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -24,6 +26,8 @@ import java.util.*;
    4. CA 将结果编码为 HTTP 返回给 consumer
  */
 public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
+    private Logger logger = LoggerFactory.getLogger(ReceiveConsumerHandler.class);
+
     ChannelFuture providerChannelFuture = null;
 
     public ReceiveConsumerHandler(ChannelFuture providerChannelFuture) {
@@ -49,6 +53,12 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                     paramMap.put(data.getName(), data.getValue());
                 }
                 final Invocation invocation = new Invocation();
+
+                logger.info("CA received from Consumer, now sending to Provider.  method: "
+                        + paramMap.get("method" +
+                        "  parameterTypesString: "+paramMap.get("parameterTypesString")+
+                        "   parameter: " + paramMap.get("parameter")));
+
                 invocation.setMethodName(paramMap.get("method"));
                 invocation.setParameterTypes(paramMap.get("parameterTypesString"));
                 invocation.setArguments(paramMap.get("parameter"));
