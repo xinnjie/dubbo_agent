@@ -4,6 +4,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.CAInitializer;
+import com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers.PAInitializer;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.EtcdRegistry;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
@@ -46,7 +47,7 @@ public class NettyProviderAgent {
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.INFO))
-                        .childHandler(new CAInitializer());
+                        .childHandler(new PAInitializer());
 
                 Channel ch = b.bind().sync().channel();
                 ch.closeFuture().sync();

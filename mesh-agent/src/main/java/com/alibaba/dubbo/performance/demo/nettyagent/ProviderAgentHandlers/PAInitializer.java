@@ -23,22 +23,27 @@ import java.util.List;
  * Created by gexinjie on 2018/6/1.
  */
 public class PAInitializer extends ChannelInitializer<SocketChannel> {
-    // 每个 PA 内部所有 handler 共用一组 Cache，这组 Cache 由 ProviderAgent 类提供
-    private HashMap<FuncType, Integer> methodIDsCache = null;
-    private HashMap<Integer, FuncType> methodsCache = null;
+    // 每个 PA 内部所有 handler 共用一组 Cache, 由于一个服务器上只运行一个PA,这组 cache 可以是全类共享
+    static private HashMap<FuncType, Integer> methodIDsCache = null;
+    static private HashMap<Integer, FuncType> methodsCache = null;
 
     private Logger logger = LoggerFactory.getLogger(PAInitializer.class);
 
 
-    public PAInitializer(HashMap<FuncType, Integer> methodIDsCache, HashMap<Integer, FuncType> methodsCache) {
-        this.methodIDsCache = methodIDsCache;
-        this.methodsCache = methodsCache;
+    public PAInitializer() {
 
+        if (methodIDsCache == null) {
+            methodIDsCache = new HashMap<>();
+        }
+        if (methodsCache == null) {
+            methodIDsCache = new HashMap<>();
+        }
     }
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
+        // PA 连接到 provider
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
         p.addLast("cacheEncoder", new CacheEncoder(this.methodIDsCache));
         p.addLast("cacheDecoder", new CacheDecoder(this.methodsCache));
