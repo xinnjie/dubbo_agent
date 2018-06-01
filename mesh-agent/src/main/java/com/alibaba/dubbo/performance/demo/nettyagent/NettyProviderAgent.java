@@ -23,27 +23,40 @@ public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
     static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
+//    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
+
+
 
     public static void main(String[] args) throws Exception{
-        // Configure the server.
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        //  TODO 要给 worker 分配几个线程?
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.option(ChannelOption.SO_BACKLOG, 1024);
-            b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .localAddress(new InetSocketAddress(agentPort))
-                    .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new CAInitializer());
+        run();
+    }
 
-            Channel ch = b.bind().sync().channel();
-            ch.closeFuture().sync();
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+
+    public static void run() {
+        try {
+            // Configure the server.
+            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+            //  TODO 要给 worker 分配几个线程?
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            try {
+                ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, workerGroup)
+                        .option(ChannelOption.SO_KEEPALIVE, true)
+                        .option(ChannelOption.TCP_NODELAY, true)
+                        .channel(NioServerSocketChannel.class)
+                        .localAddress(new InetSocketAddress(agentPort))
+                        .handler(new LoggingHandler(LogLevel.INFO))
+                        .childHandler(new CAInitializer());
+
+                Channel ch = b.bind().sync().channel();
+                ch.closeFuture().sync();
+            } finally {
+                bossGroup.shutdownGracefully();
+                workerGroup.shutdownGracefully();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+
 }

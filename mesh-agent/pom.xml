@@ -102,12 +102,15 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder</mainClass>
+                            <mainClass>com.alibaba.dubbo.performance.demo.nettyagent.AgentApp</mainClass>
                         </manifest>
                     </archive>
+                    <appendAssemblyId>false</appendAssemblyId>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <finalName>mesh-agent</finalName>
+
                 </configuration>
                 <executions>
                     <execution>
