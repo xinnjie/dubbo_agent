@@ -35,8 +35,9 @@ public class NettyConsumerAgent {
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             try {
                 ServerBootstrap b = new ServerBootstrap();
-                b.option(ChannelOption.SO_BACKLOG, 1024);
                 b.group(bossGroup, workerGroup)
+                        .option(ChannelOption.SO_KEEPALIVE, true)
+                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.INFO))
