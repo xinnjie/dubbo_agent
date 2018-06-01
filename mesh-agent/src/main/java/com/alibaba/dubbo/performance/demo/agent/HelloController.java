@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
 
 @RestController
 public class HelloController {
@@ -23,30 +24,16 @@ public class HelloController {
 
     private RpcClient rpcClient = new RpcClient(registry);
     private Random random = new Random();
-    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
-            new Endpoint("provider-large",30000),
-            new Endpoint("provider-medium",30000),
-            new Endpoint("provider-small",30000)));
+    private List<Endpoint> endpoints = null;
     private Object lock = new Object();
     private OkHttpClient httpClient = new OkHttpClient();
 
-    private List<Endpoint> weightedEndpoints = null;
 
-    private Endpoint selectEndpoint() {
-        if (weightedEndpoints == null) {
-            List<Integer> weight = Arrays.asList(3,2,1);
-            assert endpoints.size()  == weight.size();
-            weightedEndpoints = new ArrayList<>();
-            for (int i = 0; i < endpoints.size(); ++i) {
-                for (int j = 0; j < weight.get(i); j++) {
-                    weightedEndpoints.add(endpoints.get(i));
-                }
-            }
-            weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
-        }
-        return weightedEndpoints.get(random.nextInt(weightedEndpoints.size()));
 
-    }
+    /*
+    agent 和 consumer 之间的交互：
+    provider agent 会返回给 provider 一个 HTTP response, body 是一个自定义的RPC response
+     */
     @RequestMapping(value = "")
     public Object invoke(@RequestParam("interface") String interfaceName,
                          @RequestParam("method") String method,
@@ -63,12 +50,22 @@ public class HelloController {
         }
     }
 
+    /*
+        todo provider agent 和 consumer agent 的交互是什么样的？
+     */
+
+    /*
+    由 consumer agent 向 provider agent 发送 HTTP 请求， provider() 是 provider agent 对 consumer agent 的应答
+    HTTP response body 为自定义的一个 自定义的 RpcResponse 的一个字段byte[]
+     */
     public byte[] provider(String interfaceName,String method,String parameterTypesString,String parameter) throws Exception {
 
         Object result = rpcClient.invoke(interfaceName,method,parameterTypesString,parameter);
         return (byte[]) result;
     }
 
+    // q: consumer 处理了 consumer agent 获取到 consumer 请求，并通过 http 长连接转交请求给 provider agent， 由 consumer agent 返回应答给 consumer 的逻辑在哪里?
+    // a: 返回的 integer 就是最终 consumer agent 返回给 consumer 的 response body
     public Integer consumer(String interfaceName,String method,String parameterTypesString,String parameter) throws Exception {
 
         if (null == endpoints){
@@ -79,12 +76,10 @@ public class HelloController {
             }
         }
 
-        Endpoint endpoint = selectEndpoint();
+        // 简单的负载均衡，随机取一个
+        Endpoint endpoint = endpoints.get(random.nextInt(endpoints.size()));
 
         String url =  "http://" + endpoint.getHost() + ":" + endpoint.getPort();
-        logger.info("send to " + url);
-
-//        logger.info("sending http request to " + url);
 
         RequestBody requestBody = new FormBody.Builder()
                 .add("interface",interfaceName)

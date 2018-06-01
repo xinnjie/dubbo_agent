@@ -1,10 +1,10 @@
-package com.alibaba.dubbo.performance.demo.agent.dubbo;
+package com.alibaba.dubbo.performance.demo.nettyagent;
 
 import com.alibaba.dubbo.performance.demo.agent.dubbo.model.Bytes;
 import com.alibaba.dubbo.performance.demo.agent.dubbo.model.JsonUtils;
 import com.alibaba.dubbo.performance.demo.agent.dubbo.model.Request;
 import com.alibaba.dubbo.performance.demo.agent.dubbo.model.RpcInvocation;
-
+import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -26,7 +26,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
-        Request req = (Request)msg;
+        Invocation invocation = (Invocation) msg;
 
         // header.
         byte[] header = new byte[HEADER_LENGTH];
@@ -37,18 +37,20 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         // 6 是 fastjson
         header[2] = (byte) (FLAG_REQUEST | 6);
 
-        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;
-        if (req.isEvent()) header[2] |= FLAG_EVENT;
+//        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;   // true
+        header[2] |= FLAG_TWOWAY;
+
+//        if (req.isEvent()) header[2] |= FLAG_EVENT;    // false
 
         // set request id.
-        Bytes.long2bytes(req.getId(), header, 4);
+        Bytes.long2bytes(invocation.getRequestID(), header, 4);
 
         // encode request data.
         int savedWriteIndex = buffer.writerIndex();
         // 因为header 中需要知道 data length, 所以跳过头部写入 request
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        encodeRequestData(bos, req.getData());
+        encodeRequestData(bos, invocation);
 
         int len = bos.size();
         buffer.writeBytes(bos.toByteArray());
@@ -60,9 +62,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
     }
 
-    public void encodeRequestData(OutputStream out, Object data) throws Exception {
-        RpcInvocation inv = (RpcInvocation)data;
-
+    public void encodeRequestData(OutputStream out, Invocation inv) throws Exception {
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
 
         JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writer);
@@ -71,7 +71,11 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         JsonUtils.writeObject(inv.getMethodName(), writer);
         JsonUtils.writeObject(inv.getParameterTypes(), writer);
 
-        JsonUtils.writeBytes(inv.getArguments(), writer);
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        PrintWriter jsonwriter = new PrintWriter(new OutputStreamWriter(byteOut));
+        JsonUtils.writeObject(inv.getArguments(), jsonwriter);
+
+        JsonUtils.writeBytes(byteOut.toByteArray(), writer);
         JsonUtils.writeObject(inv.getAttachments(), writer);
     }
 

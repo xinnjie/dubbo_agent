@@ -1,4 +1,4 @@
-package com.alibaba.dubbo.performance.demo.agent.registry;
+package com.alibaba.dubbo.performance.demo.nettyagent.registry;
 
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
@@ -15,11 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-public class EtcdRegistry implements IRegistry{
+public class EtcdRegistry implements IRegistry {
     private Logger logger = LoggerFactory.getLogger(EtcdRegistry.class);
     // 该EtcdRegistry没有使用etcd的Watch机制来监听etcd的事件
     // 添加watch，在本地内存缓存地址列表，可减少网络调用的次数
-    // 使用的是简单的随机负载均衡，如果provider性能不一致，随机策略会影响性能
 
     private final String rootPath = "dubbomesh";
     private Lease lease;
@@ -52,7 +51,7 @@ public class EtcdRegistry implements IRegistry{
 
     // 向ETCD中注册服务
     public void register(String serviceName,int port) throws Exception {
-        // 服务注册的key为:
+        // 服务注册的key为:    /dubbomesh/com.some.package.IHelloService/192.168.100.100:2000
         String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}",rootPath,serviceName,IpHelper.getHostIp(),String.valueOf(port));
         ByteSequence key = ByteSequence.fromString(strKey);
         ByteSequence val = ByteSequence.fromString("");     // 目前只需要创建这个key,对应的value暂不使用,先留空
@@ -81,8 +80,6 @@ public class EtcdRegistry implements IRegistry{
 
         List<Endpoint> endpoints = new ArrayList<>();
 
-
-        /// key的形式  dubbomesh/com.alibaba.dubbo.performance.demo.provider.IHelloService/10.10.10.4:30000
         for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()){
             String s = kv.getKey().toStringUtf8();
             int index = s.lastIndexOf("/");

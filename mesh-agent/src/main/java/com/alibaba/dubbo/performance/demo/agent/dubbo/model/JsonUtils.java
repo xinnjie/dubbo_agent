@@ -1,13 +1,11 @@
 package com.alibaba.dubbo.performance.demo.agent.dubbo.model;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.SerializeWriter;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 
 /**
  * @author ken.lj
@@ -29,5 +27,21 @@ public class JsonUtils {
     public static void writeBytes(byte[] b, PrintWriter writer) {
         writer.print(new String(b));
         writer.flush();
+    }
+
+    public static void main(String[] args) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
+        try {
+            JsonUtils.writeObject("hello", writer);
+            JsonUtils.writeBytes(new byte[]{'1','3'}, writer);
+            JsonUtils.writeObject("hello", writer);
+            JsonUtils.writeBytes(new byte[]{'1','3'}, writer);
+
+
+            System.out.println(new String(out.toByteArray()));
+        } catch (IOException e) {
+
+        }
     }
 }
