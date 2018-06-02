@@ -24,16 +24,16 @@ public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
     static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
 
-//    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
+    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
 
 
 
     public static void main(String[] args) throws Exception{
-        run();
+        new NettyConsumerAgent().run();
     }
 
 
-    public static void run() {
+    public void run() {
         try {
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -50,6 +50,7 @@ public class NettyProviderAgent {
                         .childHandler(new PAInitializer());
 
                 Channel ch = b.bind().sync().channel();
+                logger.info("bound to port " + agentPort);
                 ch.closeFuture().sync();
             } finally {
                 bossGroup.shutdownGracefully();

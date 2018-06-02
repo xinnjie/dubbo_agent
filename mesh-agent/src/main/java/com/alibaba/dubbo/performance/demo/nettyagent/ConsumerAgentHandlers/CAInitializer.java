@@ -35,6 +35,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
 
     public CAInitializer() {
         super();
+        logger.info("**CAInitializer construct");
         // 带权重的 weighted endpoints 整个类共享
         if (weightedEndpoints == null) {
             List<Integer> weight = Arrays.asList(3, 2, 1);

@@ -125,40 +125,4 @@ public class CacheEncoder extends MessageToByteEncoder{
 
     }
 
-    enum DecodeResult {
-        NEED_MORE_INPUT, SKIP_INPUT
-    }
-
-    public static void main(String[] args) {
-        ByteBuf b = Unpooled.buffer(2);
-        byte[] bytes = b.array();
-        bytes[0] = 'a';
-        bytes[1] = 'b';
-        System.out.print(new String(b.array()));
-        HashMap<FuncType, Integer>  map = new HashMap<>();
-
-
-
-        String aa = "aa",
-            bb = "bb";
-        map.put(new FuncType(aa, bb), 1);
-        Invocation invocation = new Invocation();
-        invocation.setMethodName("aa");
-        invocation.setParameterTypes("bb");
-        assert invocation.hashCode()== new FuncType(aa, bb).hashCode();
-        assert (map.containsKey(invocation));
-        assert map.containsKey(new FuncType(aa, bb));
-
-        for (String s:
-             "hello\nhi\nhelo".split("\n")) {
-            System.out.println(s + "!!!");
-
-        }
-
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            final int n = random.nextInt(10);
-            System.out.println(n);
-        }
-    }
 }

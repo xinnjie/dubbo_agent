@@ -60,9 +60,15 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                         "  parameterTypesString: "+paramMap.get("parameterTypesString")+
                         "   parameter: " + paramMap.get("parameter"));
 
+
+                /*
+                TODO 解读http，构建对应 invocation 的重要部分，多检查一下
+                 */
                 invocation.setMethodName(paramMap.get("method"));
                 invocation.setParameterTypes(paramMap.get("parameterTypesString"));
                 invocation.setArguments(paramMap.get("parameter"));
+                invocation.setAttachment("path", paramMap.get("interface"));
+                logger.info("invocation constructed: " + invocation.toString());
 
 
                 if (providerChannelFuture.isDone()) {
