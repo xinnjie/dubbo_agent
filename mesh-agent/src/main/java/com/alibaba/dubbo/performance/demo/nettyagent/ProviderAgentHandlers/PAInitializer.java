@@ -2,8 +2,6 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.CAInitializer;
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.SendConsumerHandler;
 import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
@@ -15,9 +13,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * Created by gexinjie on 2018/6/1.
