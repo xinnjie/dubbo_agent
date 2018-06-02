@@ -21,7 +21,7 @@ import java.util.*;
    consumer agent 接收到 consumer 的连接后，需要选择一个 provider agent 进行连接
    CA 在接收到 consumer 的请求后
    1. 将 HTTP 形式的请求解码为 Invocation 对象
-   2. TODO 编码为用合适的形式发送给 PA
+   2. 编码为用合适的形式发送给 PA
    3. PA 以合适的形式返回结果
    4. CA 将结果编码为 HTTP 返回给 consumer
  */
@@ -47,7 +47,7 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
             if (req.method().equals(HttpMethod.POST)) {
                 HttpPostRequestDecoder postDecoder = new HttpPostRequestDecoder(req);
                 List<InterfaceHttpData> paramList = postDecoder.getBodyHttpDatas();
-                Map<String, String> paramMap = new HashMap<String, String>();
+                Map<String, String> paramMap = new HashMap<>();
                 for (InterfaceHttpData para : paramList) {
                     Attribute data = (Attribute) para;
                     logger.info("CA received from Consumer: " + data.getName() + " , "+ data.getValue());

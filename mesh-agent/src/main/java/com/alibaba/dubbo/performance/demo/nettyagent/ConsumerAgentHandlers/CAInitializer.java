@@ -39,10 +39,11 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
         if (weightedEndpoints == null) {
             List<Integer> weight = Arrays.asList(3, 2, 1);
             assert endpoints.size() == weight.size();
-            weightedEndpoints = new ArrayList<Endpoint>();
-            for (int i = 0; i < weight.size(); ++i) {
+            weightedEndpoints = new ArrayList<>();
+            for (int i = 0; i < endpoints.size(); ++i) {
                 for (int j = 0; j < weight.get(i); j++) {
                     weightedEndpoints.add(endpoints.get(i));
+                    logger.info("weighted endpoint: " + endpoints.get(i).getHost());
                 }
             }
             weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
@@ -50,16 +51,16 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
 
         // 因为 CA 只有一个，对每个单个 Provider 的缓存都是一样的，所以两部分关于 FuncType 的缓存整个类共享
         if (endpointMethodsIDs == null) {
-            endpointMethodsIDs = new HashMap<Endpoint, HashMap<FuncType, Integer>>();
+            endpointMethodsIDs = new HashMap<>();
             for (Endpoint endpoint : endpoints) {
-                endpointMethodsIDs.put(endpoint, new HashMap<FuncType, Integer>());
+                endpointMethodsIDs.put(endpoint, new HashMap<>());
             }
         }
 
         if (endpointMethods == null) {
-            endpointMethods = new HashMap<Endpoint, HashMap<Integer, FuncType>>();
+            endpointMethods = new HashMap<>();
             for (Endpoint endpoint : endpoints) {
-                endpointMethods.put(endpoint, new HashMap<Integer, FuncType>());
+                endpointMethods.put(endpoint, new HashMap<>());
             }
         }
     }
