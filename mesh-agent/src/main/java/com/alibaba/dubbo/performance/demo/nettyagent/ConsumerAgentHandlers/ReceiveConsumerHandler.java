@@ -54,10 +54,10 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                 }
                 final Invocation invocation = new Invocation();
 
-                logger.info("CA received from Consumer, now sending to Provider.  method: "
-                        + paramMap.get("method" +
+                logger.info("CA received from Consumer, now sending to Provider：  method: "
+                        + paramMap.get("method") +
                         "  parameterTypesString: "+paramMap.get("parameterTypesString")+
-                        "   parameter: " + paramMap.get("parameter")));
+                        "   parameter: " + paramMap.get("parameter"));
 
                 invocation.setMethodName(paramMap.get("method"));
                 invocation.setParameterTypes(paramMap.get("parameterTypesString"));

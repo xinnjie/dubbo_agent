@@ -42,8 +42,8 @@ public class NettyProviderAgent {
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
-                        .option(ChannelOption.SO_KEEPALIVE, true)
-                        .option(ChannelOption.TCP_NODELAY, true)
+//                        .option(ChannelOption.SO_KEEPALIVE, true)
+//                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.INFO))
