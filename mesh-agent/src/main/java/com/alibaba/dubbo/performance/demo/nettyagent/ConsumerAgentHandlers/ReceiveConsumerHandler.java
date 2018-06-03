@@ -50,7 +50,7 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                 Map<String, String> paramMap = new HashMap<>();
                 for (InterfaceHttpData para : paramList) {
                     Attribute data = (Attribute) para;
-                    logger.info("CA received from Consumer HTTP request: {" + data.getName() + ":"+ data.getValue() + "}");
+//                    logger.info("CA received from Consumer HTTP request: {" + data.getName() + ":"+ data.getValue() + "}");
                     paramMap.put(data.getName(), data.getValue());
                 }
                 final Invocation invocation = new Invocation();

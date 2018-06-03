@@ -81,7 +81,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             return DecodeResult.NEED_MORE_INPUT;
         }
         byteBuf.readerIndex(savedReaderIndex);
-        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
+//        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
         byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 
@@ -111,7 +111,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         */
         byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
 
-        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
+//        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
 
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
         long requestId = Bytes.bytes2long(requestIdBytes,0);
@@ -120,7 +120,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         invocation.setRequestID(requestId);
         invocation.setResult(new String(subArray));
 
-        logger.info("received response from provider: " + invocation.toString());
+//        logger.info("received response from provider: " + invocation.toString());
 
         if (getStatusMessage(status).equals("UNKNOWN STATUS")) {
             logger.info("dubbo response received UNKNOWN response");
