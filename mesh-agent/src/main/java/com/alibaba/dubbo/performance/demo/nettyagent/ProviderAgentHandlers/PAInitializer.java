@@ -35,7 +35,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         p.addLast("cacheEncoder", new CacheEncoder(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
         p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
-
         /*
         当读取到 CA 的数据后，将读到的 invocation 写入 provider 去
          */
@@ -46,8 +45,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                 Invocation invocation = (Invocation) msg;
 
-                if (providerChannelFuture.isDone()) {
+                if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
+                    logger.info("connected to provider successfully");
                     providerChannel.write(invocation);
                 } else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
@@ -63,16 +63,15 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         });
 
     }
-    public ChannelFuture bootstrapConnectToProvider(SocketChannel channel) {
-        final Channel finalChannel = channel;
+    public ChannelFuture bootstrapConnectToProvider(SocketChannel leftChannel) {
         Bootstrap bootstrap = new Bootstrap()
-                .group(channel.eventLoop())
+                .group(leftChannel.eventLoop())
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
 //                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
-                         Channel providerChannel = finalChannel;
+                         final Channel PALeftChannel = leftChannel;
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
                              ChannelPipeline pipeline = ch.pipeline();
@@ -82,15 +81,13 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
-                                     providerChannel.writeAndFlush(invocation);
+                                     PALeftChannel.writeAndFlush(invocation);
                                  }
                              });
                          }
                      }
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
-
-        logger.info("connecting to provider");
 
         return bootstrap.connect("127.0.0.1", port);
 

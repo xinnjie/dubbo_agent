@@ -97,6 +97,36 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
           100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
          */
         byte status = data[STATUS_INDEX];
+
+        logger.info("dubbo response status message: " + getStatusMessage(status));
+
+        //byte[] data = new byte[byteBuf.readableBytes()];
+        //byteBuf.readBytes(data);
+
+        // HEADER_LENGTH + 1，忽略header & Response value type的读取，直接读取实际Return value
+        // dubbo返回的body中，前后各有一个换行，去掉
+        /*
+         q: 前面去掉一个换行为什么要 +2， 而不是 +1
+         a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
+        */
+        // todo 记得改回来
+//        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
+        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH, data.length -1 );
+
+        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
+
+        byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
+        long requestId = Bytes.bytes2long(requestIdBytes,0);
+
+        Invocation invocation = new Invocation();
+        invocation.setRequestID(requestId);
+        invocation.setResult(new String(subArray));
+
+        logger.info("received response from provider: " + invocation.toString());
+        return invocation;
+    }
+
+    private String getStatusMessage(byte status) {
         String statusMessage;
         switch (status) {
             case 20: {
@@ -142,31 +172,6 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             default:
                 statusMessage = "UNKNOWN STATUS";
         }
-
-        logger.info("dubbo response status message: " + statusMessage);
-        //byte[] data = new byte[byteBuf.readableBytes()];
-        //byteBuf.readBytes(data);
-
-        // HEADER_LENGTH + 1，忽略header & Response value type的读取，直接读取实际Return value
-        // dubbo返回的body中，前后各有一个换行，去掉
-        /*
-         q: 前面去掉一个换行为什么要 +2， 而不是 +1
-         a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
-        */
-        // todo 记得改回来
-//        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
-        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH, data.length -1 );
-
-        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
-
-        byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
-        long requestId = Bytes.bytes2long(requestIdBytes,0);
-
-        Invocation invocation = new Invocation();
-        invocation.setRequestID(requestId);
-        invocation.setResult(new String(subArray));
-
-        logger.info("received response from provider: " + invocation.toString());
-        return invocation;
+        return statusMessage;
     }
 }
