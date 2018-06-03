@@ -23,7 +23,6 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
-        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
         try {
             do {
                 int savedReaderIndex = byteBuf.readerIndex();
@@ -38,8 +37,9 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
                     byteBuf.readerIndex(savedReaderIndex);
                     break;
                 }
-
-                list.add(msg);
+                if (msg != DecodeResult.SKIP_INPUT) {
+                    list.add(msg);
+                }
             } while (byteBuf.isReadable());
         } finally {
             if (byteBuf.isReadable()) {
@@ -100,8 +100,6 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
          */
         byte status = data[STATUS_INDEX];
 
-        logger.info("dubbo response status message: " + getStatusMessage(status));
-
         //byte[] data = new byte[byteBuf.readableBytes()];
         //byteBuf.readBytes(data);
 
@@ -111,9 +109,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
          q: 前面去掉一个换行为什么要 +2， 而不是 +1
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
-        // todo 记得改回来
-//        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
-        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH, data.length -1 );
+        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
 
         logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
 
@@ -125,6 +121,15 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         invocation.setResult(new String(subArray));
 
         logger.info("received response from provider: " + invocation.toString());
+
+        if (getStatusMessage(status).equals("UNKNOWN STATUS")) {
+            logger.info("dubbo response received UNKNOWN response");
+            return DecodeResult.SKIP_INPUT;
+        }
+        if (!getStatusMessage(status).equals("OK")) {
+            logger.info("dubbo response received " + getStatusMessage(status));
+            return DecodeResult.SKIP_INPUT;
+        }
         return invocation;
     }
 
