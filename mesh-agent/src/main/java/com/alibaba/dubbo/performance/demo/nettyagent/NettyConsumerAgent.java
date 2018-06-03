@@ -48,7 +48,7 @@ public class NettyConsumerAgent {
 //                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
-                        .handler(new LoggingHandler(LogLevel.INFO))
+//                        .handler(new LoggingHandler(LogLevel.INFO))
                         .childHandler(new CAInitializer(endpoints));
 
                 Channel ch = b.bind().sync().channel();
