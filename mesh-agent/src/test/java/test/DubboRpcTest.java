@@ -76,12 +76,19 @@ public class DubboRpcTest {
         requestByte.readBytes(bodyBytes);
         assertEquals(new String(bodyBytes), "\"2.0.1\"\n" +
                 "\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"\n" +
-                "\"2.0.0\"\n" +
+                "null\n" +
                 "\"hash\"\n" +
                 "\"Ljava/lang/String;\"\n" +
                 "\"hkhdkfhakjf\"\n" +
                 "{\"path\":\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"}\n");
 
+        String dubborrr = "\"2.0.1\"\n" +
+                "\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"\n" +
+                "null\n" +
+                "\"hash\"\n" +
+                "\"Ljava/lang/String;\"\n" +
+                "\"mgtMrcbvL93R6vpa1c7CQ5vOiTR6RnXIIf39pITByp8lNcGONH7uddzDtvQrGLPpHwV73krS9TbE2vs7hFSgVAhj1bboZzi2fy0DzxUWNFQG9a8WwT3F03pMxXXNzSevp9rPi6wp8pQGF4naBYOhskgXSDXFC4GUXieiJMBWAmV7wqyqR0vj5obJPLA5LehSAzUb0RMGJXSwIemJZTgFGw2Rq0oXkAbLo1qHKlDBI6DgrPBaNae8PemzKthZhswvrtMsQh3w6SerLQ6exyFf9tEtG9pat3Bs17gqfh0QGE5SaTvw6n3OhAbmwjRwHQRMjS4RYk2OQ8FNW0owaNRL7sCi5oWL3dQYA3P4Mmrg70yGdSLGES5PDzJUpHd74Tg8nTgvbeDBMnNwtf5RjpjiNjxWX3DxgyRBO1WlH9N7Qmfx7RgiFo1EyUixBvW84SjSO9qGrfytylloemHfojw1RAmFAVvtxvDIizK6MIduRi8IJQnG9FazQjELmnGYI1JGYchBIa398jlEZ8ZvNrDekSAE4v52p8n3KPIvqJt8a2MQtx0jRowrP4D0e4oOI1pR1jra9DZJXTWh11b2z4c1RjmmCmJ2nYgKicY9QzYl6OLERELhtf6FrvclRC2qDUv9mNseT8cGurUId3R2gY3knlPdlVw5DQpBz3O5oRu92waS6VK67yBauCkMQN7hzN8PcL7IMAQ5wLSw6k9mHJ7BWWUe692rUpHpNcxfQ3xRbd9R\"\n" +
+                "{\"path\":\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"}\n";
 //        assertTrue(dubboChannel.writeInbound(dubboRequest));
 //        ByteBuf dubboBytes = dubboChannel.readInbound();
 //        assertTrue(dubboBytes.isReadable());

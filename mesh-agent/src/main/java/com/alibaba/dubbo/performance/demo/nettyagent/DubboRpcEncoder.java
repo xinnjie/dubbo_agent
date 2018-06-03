@@ -71,7 +71,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
 
         JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writer);
         JsonUtils.writeObject(inv.getAttachment("path"), writer);
-        JsonUtils.writeObject(inv.getAttachment("version", "2.0.0"), writer);
+        JsonUtils.writeObject(inv.getAttachment("version"), writer);
         JsonUtils.writeObject(inv.getMethodName(), writer);
         JsonUtils.writeObject(inv.getParameterTypes(), writer);
 
