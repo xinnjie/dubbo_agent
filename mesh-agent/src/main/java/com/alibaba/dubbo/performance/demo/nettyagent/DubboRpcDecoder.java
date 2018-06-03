@@ -5,6 +5,8 @@ import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +16,8 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
     protected static final int HEADER_LENGTH = 16;
 
     protected static final byte FLAG_EVENT = (byte) 0x20;
+    private Logger logger = LoggerFactory.getLogger(DubboRpcEncoder.class);
+
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
@@ -100,6 +104,8 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         Invocation invocation = new Invocation();
         invocation.setRequestID(requestId);
         invocation.setResult(new String(subArray));
+
+        logger.info("received response from provider: " + invocation.toString());
         return invocation;
     }
 }

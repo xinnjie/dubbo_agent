@@ -1,11 +1,14 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
+import com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers.PAInitializer;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.JsonUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -21,10 +24,13 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
     protected static final byte FLAG_REQUEST = (byte) 0x80;
     protected static final byte FLAG_TWOWAY = (byte) 0x40;
     protected static final byte FLAG_EVENT = (byte) 0x20;
+    private Logger logger = LoggerFactory.getLogger(DubboRpcEncoder.class);
+
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         Invocation invocation = (Invocation) msg;
+        logger.info("sending request to provider: " + invocation.toString());
 
         // header.
         byte[] header = new byte[HEADER_LENGTH];
