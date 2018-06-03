@@ -2,11 +2,14 @@ package test;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcDecoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.embedded.EmbeddedChannel;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -17,17 +20,31 @@ import static org.junit.Assert.*;
  * Created by gexinjie on 2018/6/2.
  */
 public class CacheResponseTest {
-    @Test
-    public void testResponse() throws Exception {
-        Invocation invocation = new Invocation();
+    Invocation invocation;
+    Invocation dubboRequest = new Invocation();
+
+    @Before
+    public void setUp() throws Exception {
+        long requestID = 5;
+        String arguments = "hkhdkfhakjf";
+        invocation = new Invocation();
         invocation.setInterfaceName("com.alibaba.dubbo.performance.demo.provider.IHelloService");
         invocation.setParameterTypes("Ljava/lang/String;");
         invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
-        invocation.setRequestID(5);
+        invocation.setRequestID(requestID);
         invocation.setMethodName("hash");
         invocation.setMethodID(10);
         invocation.setResult("hello");
-        invocation.setArguments("hkhdkfhakjf");
+        invocation.setArguments(arguments);
+
+        invocation.shallowCopyInPlace(dubboRequest);
+        dubboRequest.setRequestID(requestID);
+        dubboRequest.setArguments(arguments);
+
+    }
+
+    @Test
+    public void testResponse() throws Exception {
 
         /*
         构建出一个给 PA response encoder 用的缓存，这个缓存原本应该在 decode request 时被构建
@@ -43,29 +60,20 @@ public class CacheResponseTest {
                 new CacheDecoder(methodIDsCache, null)
         );
         EmbeddedChannel PAEncodeChannel = new EmbeddedChannel(
-                new ChannelInitializer<EmbeddedChannel>() {
-                    @Override
-                    protected void initChannel(EmbeddedChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ChannelOutboundHandlerAdapter() {
-                            @Override
-                            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                                ByteBuf buf = (ByteBuf) msg;
-                                CADecodeChannel.writeInbound(buf);
-                            }
-                        });
-                        pipeline.addLast(new CacheEncoder(methodsCache,requestToMethodFirstCache));
-                    }
-                }
+                new CacheEncoder(methodsCache, requestToMethodFirstCache)
         );
+
         /*
         构建一个 invocation 模仿 一个 response
          */
-        Invocation dubboResponse =  new Invocation();
-        dubboResponse.setRequestID(invocation.getRequestID());;
+        Invocation dubboResponse = new Invocation();
+        dubboResponse.setRequestID(invocation.getRequestID());
+        ;
         dubboResponse.setResult(invocation.getResult());
 
-        assertFalse(PAEncodeChannel.writeOutbound(dubboResponse));
+        assertTrue(PAEncodeChannel.writeOutbound(dubboResponse));
+        ByteBuf responseBytes = PAEncodeChannel.readOutbound();
+        assertTrue(CADecodeChannel.writeInbound(responseBytes));
 
         Invocation response = CADecodeChannel.readInbound();
         assertNull(response.getArguments());
