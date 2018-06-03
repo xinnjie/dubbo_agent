@@ -1,4 +1,5 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
+import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.CAInitializer;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
@@ -6,20 +7,24 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
  * Created by gexinjie on 2018/5/30.
  */
 public class CacheEncoder extends MessageToByteEncoder{
+    private final HashMap<Long, Integer> requestToMethodFirstCache;
     //    public static final String NAME = "cache";
+    private Logger logger = LoggerFactory.getLogger(CacheEncoder.class);
     protected static final short MAGIC = (short) 0xdacc;
 
-    private HashMap<FuncType, Integer> methodIDs = null;
-//    private HashMap<Integer, FuncType> me
+    private final HashMap<FuncType, Integer> methodIDs;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
 
@@ -38,9 +43,30 @@ public class CacheEncoder extends MessageToByteEncoder{
 
 
 
-    public CacheEncoder(HashMap<FuncType, Integer> methodIDsCache) {
+    /*
+    Q： 为什么不让 methodIDsCache 作为 CacheEncoder 的类变量(static)，而是选择将 methodIDsCache 从外部（其实是 Agent 构建时）传过来？
+    A： 所有权的问题。关于这些方法的缓存的所有权更适合交给 Agent。这些 Cache 的声明周期是和 Agent 一致的，Agent 关闭 cache 也就要被清理了。
+        考虑一个特别的情况：如果我关闭一个 Agent ，又打开一个 Agent，原来的 Cache 还能不能用呢？ 。。。好像还真能
+        另一种情况：一台机器上同时运行两个 Agent（同一个进程），对于两台 Consumer Agent 或者两台 Provider Agent，情况还好点。但是最好额情况还是让它们互相隔离
+                  如果是一台 Consumer Agent 和一台 Provider Agent，它们之间的 Cache 就会乱套的。
+
+             我承认例子不是很好：只要保证一个进程只运行一个 Agent，Cache 作为类变量(static)也可以，而且使用还简便
+             但是直观上我觉得 Cache 所属权更适合交给 Agent。
+     */
+
+    /**
+     *
+     * @param methodIDsCache
+     * @param requestToMethodFirstCache  **只在 encode response 时会被用到**   需要对应的encoder decoder 共享使用
+     *                                  这个 map 将一个 requestID 映射到 methodID.
+     *                                  当encode 的 response 的方法信息第一次被缓存时，response encoder 可以通过 requestID 得到对应的被缓存的 methodID
+     *                                  并将这个 methodID 发给 CA，告诉它这个方法被缓存了。
+     */
+    public CacheEncoder(HashMap<FuncType, Integer> methodIDsCache, HashMap<Long, Integer> requestToMethodFirstCache) {
         super();
         this.methodIDs = methodIDsCache;
+        this.requestToMethodFirstCache = requestToMethodFirstCache;
+
     }
 
 
@@ -55,7 +81,9 @@ public class CacheEncoder extends MessageToByteEncoder{
             isCache = false;
         int HeaderLength = 0;
 
-        // encoding request
+        /* ************ request encode ************************
+         这部分代码负责收到 request 的 encode 逻辑
+          ******************************************************/
         if (isRequest) {
             if (methodIDs.containsKey(invocation)) {
                 isCache = true;
@@ -80,6 +108,8 @@ public class CacheEncoder extends MessageToByteEncoder{
 
                 out.writeCharSequence(invocation.getMethodName() + "\n", Charset.forName("utf-8"));
                 out.writeCharSequence(invocation.getParameterTypes() + "\n", Charset.forName("utf-8"));
+                out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
+
             }
             out.writeCharSequence(invocation.getArguments() + "\n", Charset.forName("utf-8"));
             int totalIndex = out.writerIndex();
@@ -89,10 +119,28 @@ public class CacheEncoder extends MessageToByteEncoder{
             out.writerIndex(totalIndex);
             return;
         }
-        // encoding response
+        /* ************ response encode ************************
+         这部分代码负责收到 response 的 encode 逻辑
+
+         此处的 invocation 要看成 dubbo 返回的一个 response，所以invocation不包含方法信息
+          ******************************************************/
         Boolean isValid = false;
-        if (!methodIDs.containsKey(invocation)) {
-            invocation.setMethodID(Invocation.getUniqueMethodID());
+        long requestID = invocation.getRequestID();
+        if (this.requestToMethodFirstCache.containsKey(requestID)) {
+            int cachedMethodID = this.requestToMethodFirstCache.get(requestID);
+            synchronized (this.requestToMethodFirstCache) {
+                this.requestToMethodFirstCache.remove(requestID);
+            }
+
+            // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
+            // todo 这里用了遍历查找methodID 对应的方法
+            for (Map.Entry<FuncType, Integer> entry : this.methodIDs.entrySet()) {
+                if (entry.getValue().equals(cachedMethodID)) {
+                    entry.getKey().shallowCopyInPlace(invocation);
+                    break;
+                }
+            }
+
             synchronized (methodIDs) {
                 methodIDs.put(invocation.shallowCopy(), invocation.getMethodID());
             }
@@ -115,6 +163,8 @@ public class CacheEncoder extends MessageToByteEncoder{
             header[2] |= FLAG_VALID;
             out.writeCharSequence(invocation.getMethodName()+ "\n", Charset.forName("utf-8"));
             out.writeCharSequence(invocation.getParameterTypes()+ "\n", Charset.forName("utf-8"));
+            out.writeCharSequence(invocation.getInterfaceName()+ "\n", Charset.forName("utf-8"));
+
         }
         out.writeCharSequence(invocation.getResult()+"\n", Charset.forName("utf-8"));
         int totalIndex = out.writerIndex();

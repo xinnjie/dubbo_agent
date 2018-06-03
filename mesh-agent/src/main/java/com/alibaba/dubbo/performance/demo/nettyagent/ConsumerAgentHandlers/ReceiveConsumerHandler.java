@@ -50,16 +50,10 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                 Map<String, String> paramMap = new HashMap<>();
                 for (InterfaceHttpData para : paramList) {
                     Attribute data = (Attribute) para;
-                    logger.info("CA received from Consumer: " + data.getName() + " , "+ data.getValue());
+                    logger.info("CA received from Consumer HTTP request: {" + data.getName() + ":"+ data.getValue() + "}");
                     paramMap.put(data.getName(), data.getValue());
                 }
                 final Invocation invocation = new Invocation();
-
-                logger.info("CA received from Consumer, now sending to Provider：  method: "
-                        + paramMap.get("method") +
-                        "  parameterTypesString: "+paramMap.get("parameterTypesString")+
-                        "   parameter: " + paramMap.get("parameter"));
-
 
                 /*
                 TODO 解读http，构建对应 invocation 的重要部分，多检查一下
@@ -67,8 +61,10 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                 invocation.setMethodName(paramMap.get("method"));
                 invocation.setParameterTypes(paramMap.get("parameterTypesString"));
                 invocation.setArguments(paramMap.get("parameter"));
+                invocation.setInterfaceName(paramMap.get("interface"));
+                //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
                 invocation.setAttachment("path", paramMap.get("interface"));
-                logger.info("invocation constructed: " + invocation.toString());
+                logger.info("invocation constructed in CA, sending to PA: " + invocation.toString());
 
 
                 if (providerChannelFuture.isDone()) {

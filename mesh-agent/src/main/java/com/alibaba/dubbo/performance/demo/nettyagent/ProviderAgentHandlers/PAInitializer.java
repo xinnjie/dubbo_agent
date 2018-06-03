@@ -19,30 +19,21 @@ import java.util.HashMap;
  * Created by gexinjie on 2018/6/1.
  */
 public class PAInitializer extends ChannelInitializer<SocketChannel> {
+    // 语义上来说这三份 cache 都属于 PA
     // 每个 PA 内部所有 handler 共用一组 Cache, 由于一个服务器上只运行一个PA,这组 cache 可以是全类共享
-    static private HashMap<FuncType, Integer> methodIDsCache = null;
-    static private HashMap<Integer, FuncType> methodsCache = null;
-
+    static private final HashMap<FuncType, Integer> methodIDsCache = new HashMap<>();
+    static private final HashMap<Integer, FuncType> methodsCache = new HashMap<>();
+    static private final HashMap<Long, Integer> requestToMethodFirstCache = new HashMap<>();
     private Logger logger = LoggerFactory.getLogger(PAInitializer.class);
 
-
-    public PAInitializer() {
-
-        if (methodIDsCache == null) {
-            methodIDsCache = new HashMap<>();
-        }
-        if (methodsCache == null) {
-            methodIDsCache = new HashMap<>();
-        }
-    }
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
         // PA 连接到 provider
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
-        p.addLast("cacheEncoder", new CacheEncoder(this.methodIDsCache));
-        p.addLast("cacheDecoder", new CacheDecoder(this.methodsCache));
+        p.addLast("cacheEncoder", new CacheEncoder(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
+        p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
 
         /*

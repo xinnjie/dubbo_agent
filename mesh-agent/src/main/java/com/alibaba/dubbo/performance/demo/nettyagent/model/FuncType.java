@@ -80,4 +80,13 @@ public class FuncType {
         result = 31 * result + (interfaceName != null ? interfaceName.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "FuncType{" +
+                "methodName='" + methodName + '\'' +
+                ", parameterTypes='" + parameterTypes + '\'' +
+                ", interfaceName='" + interfaceName + '\'' +
+                '}';
+    }
 }

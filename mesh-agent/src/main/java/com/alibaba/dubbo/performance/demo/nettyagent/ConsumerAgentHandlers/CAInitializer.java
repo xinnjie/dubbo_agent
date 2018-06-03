@@ -24,18 +24,18 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
     static private List<Endpoint> weightedEndpoints = null;
     static final Random random = new Random();
 
-    static List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
-            new Endpoint("provider-large",30000),
-            new Endpoint("provider-medium",30000),
-            new Endpoint("provider-small",30000)));
+    private final List<Endpoint> endpoints;
 
-    private HashMap<Endpoint, HashMap<FuncType, Integer>> endpointMethodsIDs = null;
-    private HashMap<Endpoint, HashMap<Integer, FuncType>> endpointMethods = null;
+    /*
+    语义上讲这两份 cache 是属于 CA 的
+     */
+    static private HashMap<Endpoint, HashMap<FuncType, Integer>> endpointMethodsIDs = null;
+    static private HashMap<Endpoint, HashMap<Integer, FuncType>> endpointMethods = null;
 
-
-    public CAInitializer() {
+    public CAInitializer(List<Endpoint> endpoints) {
         super();
-        logger.info("**CAInitializer construct");
+        this.endpoints = endpoints;
+        logger.info("**CAInitializer construct**");
         // 带权重的 weighted endpoints 整个类共享
         if (weightedEndpoints == null) {
             List<Integer> weight = Arrays.asList(3, 2, 1);
@@ -93,6 +93,10 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
       创建一个连接到 provider agent 的连接
      */
     private ChannelFuture bootStrapProviderChannel(Channel channel) {
+        /*
+         从 CA 到 PA 的连接部分，属于负载均衡
+         现在使用了很多的连接数（CA 到 PA），并使用加权随机方式连接到 PA
+         */
         Endpoint selectedProvider = selectEndpoint();
         Bootstrap bootstrap = new Bootstrap();
 
@@ -104,8 +108,9 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("CacheEncoder", new CacheEncoder(endpointMethodsIDs.get(selectedProvider)));
-                        pipeline.addLast("CacheDecoder", new CacheDecoder(endpointMethods.get(selectedProvider)));
+                        // 由于只有在 response 端会用 FirstTime Cache 这里传入了 null，表示不需要
+                        pipeline.addLast("CacheEncoder", new CacheEncoder(endpointMethodsIDs.get(selectedProvider), null));
+                        pipeline.addLast("CacheDecoder", new CacheDecoder(endpointMethods.get(selectedProvider), null));
                         // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
                         pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter(){
                             final Channel consumerChannel = channel;

@@ -7,6 +7,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 
@@ -16,7 +17,8 @@ import java.util.List;
 public class CacheDecoder extends ByteToMessageDecoder{
 //    public static final String NAME = "cache";
     protected static final short MAGIC = (short) 0xdacc;
-    private HashMap<Integer, FuncType> methods = null;
+    private final HashMap<Long, Integer> requestToMethodFirstCache;
+    private final HashMap<Integer, FuncType> methods;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
 
@@ -30,8 +32,19 @@ public class CacheDecoder extends ByteToMessageDecoder{
     protected  static final int METHOD_ID_INDEX = 16;
 
 
-    public CacheDecoder(HashMap<Integer, FuncType> methodsCache) {
+    /**
+     *
+     * @param methodsCache
+     * @param requestToMethodFirstCache **只在 decode request时会被用到** 需要对应的encoder decoder 共享使用
+     *                                  这个 map 将一个 requestID 映射到 methodID.
+     *                                  当一次 request 的 method信息 第一次在 PA 上被缓存时，
+     *                                  这个 requestID 和新缓存的 methodID 将被加入到这个 map 中，方便 encode response 时，
+     *                                  将方法信息和 method 的对应关系传回给 CA 的 response decoder
+     */
+    public CacheDecoder(HashMap<Integer, FuncType> methodsCache, HashMap<Long, Integer> requestToMethodFirstCache) {
+        super();
         this.methods = methodsCache;
+        this.requestToMethodFirstCache = requestToMethodFirstCache;
     }
 
     /*
@@ -91,8 +104,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
 
 //        byte[] dataLen = Arrays.copyOfRange(header,12,16);
 //        int len = Bytes.bytes2int(dataLen);
-        int totalLength = dataLength + HeaderLength;
-        if (readable < totalLength) {
+        final int bodyLength = dataLength - HeaderLength;
+        if (readable < dataLength) {
 //            byteBuf.readerIndex(startIndex);
             return DecodeResult.NEED_MORE_INPUT;
         }
@@ -101,7 +114,9 @@ public class CacheDecoder extends ByteToMessageDecoder{
         // 跳过 data length
         byteBuf.readInt();
 
-        // 收到 response
+        /* ************ response decode ************************
+        这部分负责收到 response 的 decode 逻辑
+         ******************************************************/
         if (!isRequest) {
             Invocation invocation = new Invocation();
             invocation.setRequestID(requestId);
@@ -114,17 +129,18 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     assert !methods.containsKey(invocation.getMethodID());
                     // 在 invocation 的方法属性读取完毕后放入缓存
 
-                    String body = byteBuf.readCharSequence(dataLength, Charset.forName("utf-8")).toString();
+                    String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                     String[] parts = body.split("\n");
-                    assert parts.length >= 3;
+                    assert parts.length >= 4;
                     invocation.setMethodName(parts[0]);
                     invocation.setParameterTypes(parts[1]);
-                    invocation.setResult(parts[2]);
+                    invocation.setInterfaceName(parts[2]);
+                    invocation.setResult(parts[3]);
                     synchronized (methods) {
                         methods.put(invocation.getMethodID(), invocation.shallowCopy());
                     }
                 }else {
-                    String body = byteBuf.readCharSequence(dataLength, Charset.forName("utf-8")).toString();
+                    String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                     String[] parts = body.split("\n");
                     assert parts.length >= 1;
                     invocation.setResult(parts[0]);
@@ -133,34 +149,57 @@ public class CacheDecoder extends ByteToMessageDecoder{
             }
 
         }
-        // 收到 request
+        /* ************ request decode ************************
+         这部分代码负责收到 request 的 decode 逻辑
+         注意，对  方法信息进行缓存的操作发生这里(request 的 decode 阶段)。
+         除了单纯地对方法信息进行缓存外，缓存后还要通知 CA 这个方法已经进行了缓存，在 encode response 的阶段，需要将新缓存的 method 的告知给 CA
+          Q:为什么把 request 的缓存操作放在这里?
+          A:从 dubbo 接收到的结果中(也就是 decode dubbo 信息之后)，只包含结果，不含有关于方法的信息。
+             如果这里不进行缓存，在 response 的encode 阶段就会丢失方法信息。
+          ******************************************************/
         else {
             Invocation invocation = new Invocation();
+            invocation.setRequestID(requestId);
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
+                // 从缓存中取出有关方法信息：methodName, interfaceName, parameterTypes
                 methods.get(invocation.getMethodID()).shallowCopyInPlace(invocation);
-                invocation.setRequestID(requestId);
                 // todo 现在假设只有一个参数，以后改进
-                String body = byteBuf.readCharSequence(dataLength, Charset.forName("utf-8")).toString();
+                String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 invocation.setArguments(body.trim());
                 return invocation;
             }
-            // 假如没有 cache 过，将现在这个 method 进行 cache
+            /*
+            假如没有 cache 过，将现在这个 method 进行 cache
+             */
             else {
-                invocation = new Invocation();
                 /*
                  TODO 忽略 attachment
-                 todo interface name??
                  attachment 包括
                       * Dubbo version
                       * Service name
                       * Service version
                  */
-                String body = byteBuf.readCharSequence(dataLength, Charset.forName("utf-8")).toString();
+
+                String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 String[] parts = body.split("\n");
-                assert parts.length >= 2;
+                assert parts.length >= 4;
                 invocation.setMethodName(parts[0]);
                 invocation.setParameterTypes(parts[1]);
+                invocation.setInterfaceName(parts[2]);
+                invocation.setArguments(parts[3]);
+                // TODO 最好在添加缓存时先查看一下缓存中是否含有这个方法的缓存，这里先不做是因为只缓存了 methodID -> funcType 的缓存，如果要找就需要遍历一次 hashMap
+                //                if (!this.methods.containsKey(invocation))
+
+
+                // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
+                int newMethodID = Invocation.getUniqueMethodID();
+                synchronized (this.methods) {
+                    this.methods.put(newMethodID, invocation.shallowCopy());
+                }
+                synchronized (this.requestToMethodFirstCache) {
+                    this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
+                }
                 return invocation;
             }
         }

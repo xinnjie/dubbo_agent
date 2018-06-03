@@ -31,7 +31,7 @@ public class Invocation extends FuncType{
 
 //    private static final long serialVersionUID = -4355285085441097045L;
 
-    private static AtomicLong atomicLong = new AtomicLong();
+    private static AtomicLong atomicLong = new AtomicLong(1);
     private static AtomicInteger atomicInteger = new AtomicInteger();
 
     private String arguments;
@@ -84,6 +84,13 @@ public class Invocation extends FuncType{
 
 
     public void setAttachment(String key, String value) {
+        /*
+        path 和 interface 同义
+         */
+        if (key.equals("path")) {
+            this.setInterfaceName(value);
+            return;
+        }
         if (attachments == null) {
             attachments = new HashMap<String, String>();
         }
@@ -91,6 +98,13 @@ public class Invocation extends FuncType{
     }
 
     public String getAttachment(String key, String defaultValue) {
+        if (key.equals("path")) {
+            if (this.getInterfaceName() != null) {
+                return this.getInterfaceName();
+            } else {
+                return defaultValue;
+            }
+        }
         if (attachments == null) {
             return defaultValue;
         }
@@ -102,6 +116,13 @@ public class Invocation extends FuncType{
     }
 
     public String getAttachment(String key) {
+        if (key.equals("path")) {
+            if (this.getInterfaceName() != null) {
+                return this.getInterfaceName();
+            } else {
+                return null;
+            }
+        }
         if (attachments == null) {
             return null;
         }
@@ -109,8 +130,29 @@ public class Invocation extends FuncType{
     }
 
     public Map<String, String> getAttachments() {
-        return attachments;
+        if (this.getInterfaceName() != null)  {
+            if (attachments != null ) {
+                HashMap<String, String> new_map = new HashMap<>(attachments);
+                new_map.put("path", this.getInterfaceName());
+                return new_map;
+            } else {
+                HashMap<String, String> new_map = new HashMap<>();
+                new_map.put("path", this.getInterfaceName());
+                return new_map;
+            }
+        }
+            return attachments;
     }
 
-
+    @Override
+    public String toString() {
+        return "Invocation{" +
+                "methodName='" + this.getMethodName() + '\'' +
+                ", parameterTypes='" + this.getParameterTypes() + '\'' +
+                ", arguments='" + arguments + '\'' +
+                ", result='" + result + '\'' +
+                ", requestID=" + requestID +
+                ", methodID=" + methodID +
+                '}';
+    }
 }
