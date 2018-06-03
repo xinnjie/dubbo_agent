@@ -111,7 +111,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         */
         byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
 
-//        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
+        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
 
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
         long requestId = Bytes.bytes2long(requestIdBytes,0);
