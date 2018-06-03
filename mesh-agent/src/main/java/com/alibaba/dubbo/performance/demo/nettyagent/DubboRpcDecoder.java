@@ -3,6 +3,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
-
+        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
         try {
             do {
                 int savedReaderIndex = byteBuf.readerIndex();
