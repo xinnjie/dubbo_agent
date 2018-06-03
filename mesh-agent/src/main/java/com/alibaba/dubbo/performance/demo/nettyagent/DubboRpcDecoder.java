@@ -18,7 +18,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
     protected static final int STATUS_INDEX = 3;
 
     protected static final byte FLAG_EVENT = (byte) 0x20;
-    private Logger logger = LoggerFactory.getLogger(DubboRpcEncoder.class);
+    private Logger logger = LoggerFactory.getLogger(DubboRpcDecoder.class);
 
 
     @Override
@@ -81,6 +81,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             return DecodeResult.NEED_MORE_INPUT;
         }
         byteBuf.readerIndex(savedReaderIndex);
+        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
         byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 

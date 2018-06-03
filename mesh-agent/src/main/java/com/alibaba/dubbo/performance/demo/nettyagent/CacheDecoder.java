@@ -129,7 +129,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());;
                 if (isValid) {
-                    //todo 当 Valid 有效时，说明 response 第一次第一次缓存 method id
+                    //todo 当 Valid 有效时，说明 response 第一次缓存 method id
                     assert !methods.containsKey(invocation.getMethodID());
                     // 在 invocation 的方法属性读取完毕后放入缓存
 
@@ -185,7 +185,6 @@ public class CacheDecoder extends ByteToMessageDecoder{
                       * Service name
                       * Service version
                  */
-
                 String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 String[] parts = body.split("\n");
                 assert parts.length >= 4;
@@ -205,8 +204,6 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 synchronized (this.requestToMethodFirstCache) {
                     this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
                 }
-                logger.info("received request from CA: " + invocation.toString());
-
                 return invocation;
             }
         }
