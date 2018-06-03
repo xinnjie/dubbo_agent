@@ -52,7 +52,6 @@ public class NettyConsumerAgent {
                         .childHandler(new CAInitializer(endpoints));
 
                 Channel ch = b.bind().sync().channel();
-                logger.info("");
                 ch.closeFuture().sync();
             } finally {
                 bossGroup.shutdownGracefully();

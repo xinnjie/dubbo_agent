@@ -64,8 +64,6 @@ public class ReceiveConsumerHandler extends ChannelInboundHandlerAdapter{
                 invocation.setInterfaceName(paramMap.get("interface"));
                 //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
                 invocation.setAttachment("path", paramMap.get("interface"));
-                logger.info("invocation constructed in CA, sending to PA: " + invocation.toString());
-
 
                 if (providerChannelFuture.isDone()) {
                     Channel providerChannel = providerChannelFuture.channel();

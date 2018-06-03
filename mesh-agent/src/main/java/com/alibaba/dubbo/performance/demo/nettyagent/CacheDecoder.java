@@ -4,6 +4,8 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -16,6 +18,8 @@ import java.util.List;
  */
 public class CacheDecoder extends ByteToMessageDecoder{
 //    public static final String NAME = "cache";
+    private Logger logger = LoggerFactory.getLogger(CacheDecoder.class);
+
     protected static final short MAGIC = (short) 0xdacc;
     private final HashMap<Long, Integer> requestToMethodFirstCache;
     private final HashMap<Integer, FuncType> methods;
@@ -145,6 +149,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     assert parts.length >= 1;
                     invocation.setResult(parts[0]);
                 }
+                logger.info("received response from PA: " + invocation.toString());
                 return invocation;
             }
 
@@ -200,6 +205,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 synchronized (this.requestToMethodFirstCache) {
                     this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
                 }
+                logger.info("received request from CA: " + invocation.toString());
+
                 return invocation;
             }
         }

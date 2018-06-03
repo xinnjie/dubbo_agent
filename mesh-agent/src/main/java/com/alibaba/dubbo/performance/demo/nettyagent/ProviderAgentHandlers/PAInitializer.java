@@ -46,9 +46,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                 Invocation invocation = (Invocation) msg;
 
-                logger.info("requestId=" + invocation.getRequestID());
-                logger.info("received from CA, and sending to provider: " + invocation.toString());
-
                 if (providerChannelFuture.isDone()) {
                     Channel providerChannel = providerChannelFuture.channel();
                     providerChannel.write(invocation);
@@ -85,7 +82,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
-                                     logger.info("PA received from provider: " + invocation.toString());
                                      providerChannel.writeAndFlush(invocation);
                                  }
                              });

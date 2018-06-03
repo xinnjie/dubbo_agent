@@ -111,6 +111,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
 
             }
+            logger.info("sending request to PA: " + invocation.toString());
             out.writeCharSequence(invocation.getArguments() + "\n", Charset.forName("utf-8"));
             int totalIndex = out.writerIndex();
             Bytes.int2bytes(totalIndex-startWriteIndex, header, DATA_LENGTH_INDEX);
@@ -172,6 +173,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
+        logger.info("sending response to CA: " + invocation.toString());
 
     }
 
