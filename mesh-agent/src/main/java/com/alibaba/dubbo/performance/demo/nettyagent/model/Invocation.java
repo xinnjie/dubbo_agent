@@ -31,8 +31,8 @@ public class Invocation extends FuncType{
 
 //    private static final long serialVersionUID = -4355285085441097045L;
 
-    private static AtomicLong atomicLong = new AtomicLong(1);
-    private static AtomicInteger atomicInteger = new AtomicInteger(1);
+    private static AtomicLong atomicLong = new AtomicLong(31);
+    private static AtomicInteger atomicInteger = new AtomicInteger(23);
 
     private String arguments;
 

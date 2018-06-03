@@ -14,6 +14,7 @@ import java.util.List;
 public class DubboRpcDecoder extends ByteToMessageDecoder {
     // header length.
     protected static final int HEADER_LENGTH = 16;
+    protected static final int STATUS_INDEX = 3;
 
     protected static final byte FLAG_EVENT = (byte) 0x20;
     private Logger logger = LoggerFactory.getLogger(DubboRpcEncoder.class);
@@ -82,8 +83,67 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 
+        //status
+        /*
+          20 - OK
+          30 - CLIENT_TIMEOUT
+          31 - SERVER_TIMEOUT
+          40 - BAD_REQUEST
+          50 - BAD_RESPONSE
+          60 - SERVICE_NOT_FOUND
+          70 - SERVICE_ERROR
+          80 - SERVER_ERROR
+          90 - CLIENT_ERROR
+          100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
+         */
+        byte status = data[STATUS_INDEX];
+        String statusMessage;
+        switch (status) {
+            case 20: {
+                statusMessage = "Ok";
+                break;
+            }
+            case 30: {
+                statusMessage = "CLIENT_TIMEOUT";
+                break;
+            }
+            case 31: {
+                statusMessage = "SERVER_TIMEOUT";
+                break;
+            }
+            case 40: {
+                statusMessage = "BAD_REQUEST";
+                break;
+            }
+            case 50: {
+                statusMessage = "BAD_RESPONSE";
+                break;
+            }
+            case 60: {
+                statusMessage = "SERVICE_NOT_FOUND";
+                break;
+            }
+            case 70: {
+                statusMessage = "SERVICE_ERROR";
+                break;
+            }
+            case 80: {
+                statusMessage = "SERVER_ERROR";
+                break;
+            }
+            case 90: {
+                statusMessage = "CLIENT_ERROR";
+                break;
+            }
+            case 100: {
+                statusMessage = "SERVER_THREADPOOL_EXHAUSTED_ERROR";
+                break;
+            }
+            default:
+                statusMessage = "UNKNOWN STATUS";
+        }
 
-
+        logger.info("dubbo response status message: " + statusMessage);
         //byte[] data = new byte[byteBuf.readableBytes()];
         //byteBuf.readBytes(data);
 
@@ -93,7 +153,10 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
          q: 前面去掉一个换行为什么要 +2， 而不是 +1
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
-        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
+        // todo 记得改回来
+//        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
+        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH, data.length -1 );
+
         logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
 
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
