@@ -92,6 +92,7 @@ public class DubboRpcTest {
 
     @Test
     public void dubboDecode() throws Exception {
+        //todo 需要一个标准的 dubbo response
         EmbeddedChannel dubboDecodeChannel = new EmbeddedChannel(
                 new DubboRpcDecoder()
         );

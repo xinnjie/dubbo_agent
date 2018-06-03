@@ -74,15 +74,14 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         byteBuf.readBytes(header);
         byte[] dataLen = Arrays.copyOfRange(header,12,16);
         int len = Bytes.bytes2int(dataLen);
-        int tt = len + HEADER_LENGTH;
-        if (readable < tt) {
+        int totalLength = len + HEADER_LENGTH;
+        if (readable < totalLength) {
             return DecodeResult.NEED_MORE_INPUT;
         }
         byteBuf.readerIndex(savedReaderIndex);
-        byte[] data = new byte[tt];
+        byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 
-        logger.info("receive dubbo protocal body + {" + new String(data) + "}");
 
 
         //byte[] data = new byte[byteBuf.readableBytes()];
@@ -95,6 +94,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
         byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
+        logger.info("receive dubbo protocal body {" + new String(subArray) + "}");
 
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
         long requestId = Bytes.bytes2long(requestIdBytes,0);
