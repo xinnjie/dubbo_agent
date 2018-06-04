@@ -9,7 +9,7 @@ import io.netty.handler.codec.http.*;
 /**
  * Created by gexinjie on 2018/5/31.
  */
-public class SendConsumerHandler extends ChannelOutboundHandlerAdapter{
+public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Invocation invocation = (Invocation) msg;
