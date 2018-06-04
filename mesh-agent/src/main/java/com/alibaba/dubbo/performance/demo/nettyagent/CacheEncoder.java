@@ -140,10 +140,6 @@ public class CacheEncoder extends MessageToByteEncoder{
                 }
             }
 
-//            PA 中 加入 cache 由 decoding request 来做， encode response 时不要对 methodID 修改
-//            synchronized (methodIDs) {
-//                methodIDs.put(invocation.shallowCopy(), invocation.getMethodID());
-//            }
             isValid = true;
         }
         isCache = true;

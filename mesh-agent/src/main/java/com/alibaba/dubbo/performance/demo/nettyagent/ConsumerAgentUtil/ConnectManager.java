@@ -120,7 +120,7 @@ public class ConnectManager {
                         }
                     });
 
-            logger.info("connecting to " + endpoint.getHost() + ":" + endpoint.getPort());
+//            logger.info("connecting to " + endpoint.getHost() + ":" + endpoint.getPort());
             PAChannelFutures.get(endpoint).add(bootstrap.connect(endpoint.getHost(), endpoint.getPort()));
         }
 

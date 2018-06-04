@@ -30,7 +30,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         Invocation invocation = (Invocation) msg;
-//        logger.info("sending request to provider: " + invocation.toString());
+        logger.info("sending request to provider: " + invocation.toString());
 
         // header.
         byte[] header = new byte[HEADER_LENGTH];
