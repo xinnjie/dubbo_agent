@@ -5,6 +5,8 @@ import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -100,9 +102,17 @@ public class DubboRpcTest {
     @Test
     public void dubboDecode() throws Exception {
         //todo 需要一个标准的 dubbo response
+        String dubboResponseHex = "dabb061400000000000000200000000d310a2d3131343331323830310a";
+        // Invocation{methodName='null', parameterTypes='null', arguments='null', result='-114312801', requestID=32, methodID=-1}
+        byte[] responseBytes = ByteBufUtil.decodeHexDump(dubboResponseHex);
         EmbeddedChannel dubboDecodeChannel = new EmbeddedChannel(
                 new DubboRpcDecoder()
         );
+        ByteBuf input = Unpooled.copiedBuffer(responseBytes);
+        assertTrue(dubboDecodeChannel.writeInbound(input));
+        Invocation response = dubboDecodeChannel.readInbound();
+        assertEquals(response.getResult(), "-114312801");
+        assertEquals(32, response.getRequestID());
 
     }
 }

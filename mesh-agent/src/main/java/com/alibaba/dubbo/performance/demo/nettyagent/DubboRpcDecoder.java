@@ -126,7 +126,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             logger.info("dubbo response received UNKNOWN response");
             return DecodeResult.SKIP_INPUT;
         }
-        if (!getStatusMessage(status).equals("OK")) {
+        if (!getStatusMessage(status).equals("Ok")) {
             logger.info("dubbo response received " + getStatusMessage(status));
             return DecodeResult.SKIP_INPUT;
         }
