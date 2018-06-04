@@ -163,8 +163,27 @@ public class ConnectManager {
         synchronized (this.request2CAChannel) {
             this.request2CAChannel.put(requestID, consumerChannel);
         }
-        return PAChannels.get(random.nextInt(PAChannels.size()));
+        Channel selected = PAChannels.get(random.nextInt(PAChannels.size()));
+        logger.info("CA sending to,  检查确保连接到了三个 PA" + getEndpoint(selected).toString());
+        return selected;
     }
+
+    // todo for debug
+    private Endpoint getEndpoint(Channel channel) {
+        for (Map.Entry<Endpoint, List<Channel>> pair:
+            this.endpoint2Channel.entrySet()
+             ) {
+            for (Channel c :
+                    pair.getValue()) {
+                if (c.equals(channel)) {
+                    return pair.getKey();
+                }
+            }
+        }
+        logger.error("missing according endpoint " + channel.toString());
+        return null;
+    }
+
 //
 //    private Endpoint selectEndpoint() {
 //        return weightedEndpoints.get(random.nextInt(endpoints.size()));

@@ -1,11 +1,5 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
-import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;

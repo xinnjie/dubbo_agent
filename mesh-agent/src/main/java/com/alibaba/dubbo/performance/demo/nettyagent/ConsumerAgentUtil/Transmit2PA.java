@@ -6,10 +6,12 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.channel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Transmit2PA extends ChannelInboundHandlerAdapter {
     private final ConnectManager connectManger;
-//    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
+    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
 
 
     public Transmit2PA(ConnectManager manager) {
@@ -28,6 +30,7 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
         long requestID = Invocation.getUniqueReqeustID();
         requestInvocation.setRequestID(requestID);
         Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
+//        logger.info("sending to Channel " + providerChannel.toString());
         providerChannel.writeAndFlush(requestInvocation);
 
     }

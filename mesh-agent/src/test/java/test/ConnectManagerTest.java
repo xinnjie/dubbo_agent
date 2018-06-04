@@ -29,7 +29,9 @@ public class ConnectManagerTest {
     @Test
     public void connectConstruct() throws Exception {
         EmbeddedChannel dummyChannel = new EmbeddedChannel();
-        ConnectManager connectManager = new ConnectManager(dummyChannel.eventLoop(), endpoints);
+//        ConnectManager connectManager = new ConnectManager(dummyChannel.eventLoop(), endpoints);
+
+        // todo 不支持 EmbbedEventLoop;
     }
 
 }
