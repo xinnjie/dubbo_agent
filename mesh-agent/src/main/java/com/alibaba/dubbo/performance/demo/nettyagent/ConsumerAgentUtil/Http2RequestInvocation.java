@@ -1,4 +1,4 @@
-package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers;
+package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.channel.*;

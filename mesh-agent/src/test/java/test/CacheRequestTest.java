@@ -5,6 +5,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -30,21 +31,7 @@ public class CacheRequestTest {
         );
 
         EmbeddedChannel CAEncodeChannel = new EmbeddedChannel(
-                new ChannelInitializer<EmbeddedChannel>() {
-                    @Override
-                    protected void initChannel(EmbeddedChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ChannelOutboundHandlerAdapter() {
-                            @Override
-                            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                                ByteBuf buf = (ByteBuf) msg;
-                                PADecodeChannel.writeInbound(buf);
-                            }
-                        });
-                        pipeline.addLast(new CacheEncoder(methodsCache, null));
-
-                    }
-                }
+                new CacheEncoder(methodsCache, null)
         );
 //        ByteBuf buf = Unpooled.buffer();
         Invocation invocation = new Invocation();
@@ -53,9 +40,11 @@ public class CacheRequestTest {
         invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
         invocation.setArguments("adsadjknjkstrange");
         invocation.setMethodName("hash");
+        invocation.setRequestID(31);
 
-        assertFalse(CAEncodeChannel.writeOutbound(invocation));
-
+        assertTrue(CAEncodeChannel.writeOutbound(invocation));
+        ByteBuf requestBytes = CAEncodeChannel.readOutbound();
+        assertTrue(PADecodeChannel.writeInbound(requestBytes));
         Invocation request = PADecodeChannel.readInbound();
         assertEquals(invocation.getArguments(), request.getArguments());
         assertEquals(invocation.getMethodName(), request.getMethodName());
@@ -63,8 +52,7 @@ public class CacheRequestTest {
         assertEquals(invocation.getParameterTypes(), request.getParameterTypes());
 
         assertTrue(request.getRequestID() != -1);
-        // 因为 invocation 是经过 encoder(request side) 后才被赋予  requestID 的，所以 invocation ID 和 request ID 不应该相同
-        assertNotEquals(invocation.getRequestID(), request.getRequestID());
+        assertEquals(invocation.getRequestID(), request.getRequestID());
 
 
 

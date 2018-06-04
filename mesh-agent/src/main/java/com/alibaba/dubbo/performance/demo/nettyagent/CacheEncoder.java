@@ -1,9 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.CAInitializer;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Created by gexinjie on 2018/5/30.
@@ -96,7 +93,8 @@ public class CacheEncoder extends MessageToByteEncoder{
             // set request id
             // request 放需要分配一个 reqeustID 给每次 encode
             // 启动方面只要使用这个 ID，不能再分配
-            Bytes.long2bytes(Invocation.getUniqueReqeustID(), header, 4);
+            assert invocation.getRequestID() != -1;
+            Bytes.long2bytes(invocation.getRequestID(), header, 4);
 
             if (isCache) {
                 header[2] |= FLAG_CACHE;

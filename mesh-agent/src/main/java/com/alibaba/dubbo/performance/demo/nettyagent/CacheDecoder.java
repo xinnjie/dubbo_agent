@@ -149,7 +149,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     assert parts.length >= 1;
                     invocation.setResult(parts[0]);
                 }
-                logger.info("received response from PA: " + invocation.toString());
+//                logger.info("received response from PA: " + invocation.toString());
                 return invocation;
             }
 

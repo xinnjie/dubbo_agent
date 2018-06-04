@@ -1,15 +1,12 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.CAInitializer;
+import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.*;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.EtcdRegistry;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.IRegistry;
 import org.slf4j.Logger;
@@ -33,6 +30,7 @@ public class NettyConsumerAgent {
             new Endpoint("provider-medium",30000),
             new Endpoint("provider-small",30000)));
 
+
     public static void main(String[] args) throws Exception{
         new NettyConsumerAgent().run();
     }
@@ -41,6 +39,7 @@ public class NettyConsumerAgent {
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
+            ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -49,7 +48,7 @@ public class NettyConsumerAgent {
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
 //                        .handler(new LoggingHandler(LogLevel.INFO))
-                        .childHandler(new CAInitializer(endpoints));
+                        .childHandler(new CAInitializer(connectManager));
 
                 Channel ch = b.bind().sync().channel();
                 ch.closeFuture().sync();

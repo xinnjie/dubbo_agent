@@ -1,4 +1,4 @@
-package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers;
+package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.Unpooled;
@@ -21,6 +21,7 @@ public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
                 Unpooled.wrappedBuffer(invocation.getResult().getBytes()));
         response.headers().set(CONTENT_TYPE, "text/plain");
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
+        // todo isAlive 设置
         ctx.writeAndFlush(response);
     }
 }

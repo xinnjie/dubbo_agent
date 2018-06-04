@@ -1,6 +1,6 @@
 package test;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentHandlers.Http2RequestInvocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Http2RequestInvocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
