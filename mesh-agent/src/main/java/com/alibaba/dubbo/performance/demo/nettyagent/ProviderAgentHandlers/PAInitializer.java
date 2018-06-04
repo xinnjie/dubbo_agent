@@ -48,7 +48,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
 //                    logger.info("connected to provider successfully");
-                    providerChannel.write(invocation);
+                    providerChannel.writeAndFlush(invocation);
                 } else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
                         @Override

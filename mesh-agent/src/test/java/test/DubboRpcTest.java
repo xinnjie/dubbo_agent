@@ -100,8 +100,7 @@ public class DubboRpcTest {
     }
 
     @Test
-    public void dubboDecode() throws Exception {
-        //todo 需要一个标准的 dubbo response
+    public void dubboNormalDecode() throws Exception {
         String dubboResponseHex = "dabb061400000000000000200000000d310a2d3131343331323830310a";
         // Invocation{methodName='null', parameterTypes='null', arguments='null', result='-114312801', requestID=32, methodID=-1}
         byte[] responseBytes = ByteBufUtil.decodeHexDump(dubboResponseHex);
@@ -113,6 +112,20 @@ public class DubboRpcTest {
         Invocation response = dubboDecodeChannel.readInbound();
         assertEquals(response.getResult(), "-114312801");
         assertEquals(32, response.getRequestID());
+    }
 
+    @Test
+    public void dubboNullDecode() throws Exception {
+        String dubboResponseHex = "dabbe6000000000000000007000000056e756c6c0a";
+        // Invocation{methodName='null', parameterTypes='null', arguments='null', result='-114312801', requestID=32, methodID=-1}
+        byte[] responseBytes = ByteBufUtil.decodeHexDump(dubboResponseHex);
+        EmbeddedChannel dubboDecodeChannel = new EmbeddedChannel(
+                new DubboRpcDecoder()
+        );
+        ByteBuf input = Unpooled.copiedBuffer(responseBytes);
+        assertFalse(dubboDecodeChannel.writeInbound(input));
+//        Invocation response = dubboDecodeChannel.readInbound();
+//        assertEquals(response.getResult(), "-114312801");
+//        assertEquals(32, response.getRequestID());
     }
 }
