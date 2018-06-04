@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 public class Transmit2PA extends ChannelInboundHandlerAdapter {
 //    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
 
-    ChannelFuture providerChannelFuture = null;
+    final ChannelFuture providerChannelFuture;
 
     public Transmit2PA(ChannelFuture providerChannelFuture) {
         this.providerChannelFuture = providerChannelFuture;

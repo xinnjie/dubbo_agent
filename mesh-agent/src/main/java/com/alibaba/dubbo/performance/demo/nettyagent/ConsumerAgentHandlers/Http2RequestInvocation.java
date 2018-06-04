@@ -26,7 +26,7 @@ import java.util.*;
    4. CA 将结果编码为 HTTP 返回给 consumer
  */
 public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
-//    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
+    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
 
     /**
      *
@@ -56,7 +56,9 @@ public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
             invocation.setInterfaceName(paramMap.get("interface"));
             //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
 //                invocation.setAttachment("path", paramMap.get("interface"));
-            ctx.writeAndFlush(invocation);
+            ctx.fireChannelRead(invocation);
+        } else {
+            logger.warn("CA received non-post request from consumer");
         }
     }
 
