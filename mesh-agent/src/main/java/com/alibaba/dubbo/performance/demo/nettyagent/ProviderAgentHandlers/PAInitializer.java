@@ -50,7 +50,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
                 if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
-                    logger.info("is about to send to provider");
+                    logger.info("is about to send to provider + " + invocation.toString());
                     providerChannel.writeAndFlush(invocation);
                 } else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
