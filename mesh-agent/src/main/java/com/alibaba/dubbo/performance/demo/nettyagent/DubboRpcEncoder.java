@@ -86,20 +86,20 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
          debug
 
          */
-        PrintWriter writerToSysout = new PrintWriter(new OutputStreamWriter(System.out));
-
-        JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writerToSysout);
-        JsonUtils.writeObject(inv.getAttachment("path"), writerToSysout);
-        JsonUtils.writeObject(inv.getAttachment("version"), writerToSysout);
-        JsonUtils.writeObject(inv.getMethodName(), writerToSysout);
-        JsonUtils.writeObject(inv.getParameterTypes(), writerToSysout);
-
-        ByteArrayOutputStream byteOut2 = new ByteArrayOutputStream();
-        PrintWriter jsonwriter2 = new PrintWriter(new OutputStreamWriter(byteOut2));
-        JsonUtils.writeObject(inv.getArguments(), jsonwriter2);
-
-        JsonUtils.writeBytes(byteOut2.toByteArray(), writerToSysout);
-        JsonUtils.writeObject(inv.getAttachments(), writerToSysout);
+//        PrintWriter writerToSysout = new PrintWriter(new OutputStreamWriter(System.out));
+//
+//        JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writerToSysout);
+//        JsonUtils.writeObject(inv.getAttachment("path"), writerToSysout);
+//        JsonUtils.writeObject(inv.getAttachment("version"), writerToSysout);
+//        JsonUtils.writeObject(inv.getMethodName(), writerToSysout);
+//        JsonUtils.writeObject(inv.getParameterTypes(), writerToSysout);
+//
+//        ByteArrayOutputStream byteOut2 = new ByteArrayOutputStream();
+//        PrintWriter jsonwriter2 = new PrintWriter(new OutputStreamWriter(byteOut2));
+//        JsonUtils.writeObject(inv.getArguments(), jsonwriter2);
+//
+//        JsonUtils.writeBytes(byteOut2.toByteArray(), writerToSysout);
+//        JsonUtils.writeObject(inv.getAttachments(), writerToSysout);
     }
 
 }
