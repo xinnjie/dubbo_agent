@@ -114,6 +114,7 @@ public class ConnectManager {
                                     Invocation invocation = (Invocation) msg;
                                     // todo selectConsumerChannel将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
                                     Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
+                                    logger.info("find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                     consumerChannel.writeAndFlush(invocation);
                                 }
                             });

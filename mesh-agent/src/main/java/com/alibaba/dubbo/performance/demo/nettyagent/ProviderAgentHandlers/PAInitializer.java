@@ -89,6 +89,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
 
+        logger.info("connection to provider established");
         return bootstrap.connect("127.0.0.1", port);
 
     }
