@@ -52,7 +52,10 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                     Channel providerChannel = providerChannelFuture.channel();
                     logger.info("is about to send to provider + " + invocation.toString());
                     providerChannel.writeAndFlush(invocation);
-                } else {
+                } else if (providerFuture.isDone() & providerFuture.cause() != null) {
+                    logger.error("connection to provider not estabalished! : " + providerFuture.cause().getMessage());
+                }
+                else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
