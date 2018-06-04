@@ -57,6 +57,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             Channel providerChannel = future.channel();
+                            logger.info("is about to send to provider + " + invocation.toString());
                             providerChannel.writeAndFlush(invocation);
                         }
                     });
@@ -80,7 +81,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                              ChannelPipeline pipeline = ch.pipeline();
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
-                             pipeline.addLast("sendToCAHandler", new ChannelInboundHandlerAdapter() {
+                             pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
@@ -92,7 +93,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
 
-        logger.info("connection to provider established");
         return bootstrap.connect("127.0.0.1", port);
 
     }
