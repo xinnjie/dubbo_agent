@@ -159,7 +159,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
          注意，对  方法信息进行缓存的操作发生这里(request 的 decode 阶段)。
          除了单纯地对方法信息进行缓存外，缓存后还要通知 CA 这个方法已经进行了缓存，在 encode response 的阶段，需要将新缓存的 method 的告知给 CA
           Q:为什么把 request 的缓存操作放在这里?
-          A:从 dubbo 接收到的结果中(也就是 decode dubbo 信息之后)，只包含结果，不含有关于方法的信息。
+          A:从 dubbo 接收到的结果中(也就是``` decode dubbo 信息之后)，只包含结果，不含有关于方法的信息。
              如果这里不进行缓存，在 response 的encode 阶段就会丢失方法信息。
           ******************************************************/
         else {
