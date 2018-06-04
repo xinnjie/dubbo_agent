@@ -92,8 +92,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
            当写入 Invocation 到 Consumer 时，
            下面的这个 handler将 invocation 的 result 提取出来，构造出一个 POST 请求，传递个 http encoder
         */
-        p.addLast("sendToConsumer", new InvocationResult2Http());
-
+        p.addLast("responseInvocation2http", new InvocationResult2Http());
     }
 
 

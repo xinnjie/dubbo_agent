@@ -19,6 +19,11 @@ import static org.junit.Assert.*;
 /**
  * Created by gexinjie on 2018/6/2.
  */
+
+
+/*
+ 测试从 PA 发送 invocation 到 CA 的过程（即发送 response 的过程）
+ */
 public class CacheResponseTest {
     Invocation invocation;
     Invocation dubboRequest = new Invocation();

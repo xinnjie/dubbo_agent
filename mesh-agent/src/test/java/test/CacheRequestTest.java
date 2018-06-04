@@ -17,6 +17,9 @@ import static org.junit.Assert.*;
 /**
  * Created by gexinjie on 2018/6/2.
  */
+/*
+ 测试从 CA 发送 invocation 到 PA 的过程（即发送 request 的过程）
+ */
 public class CacheRequestTest {
     @Test
     public void testCacheRequest() throws Exception {

@@ -17,23 +17,8 @@ import java.util.*;
  */
 
 
-/*
-   consumer agent 接收到 consumer 的连接后，需要选择一个 provider agent 进行连接
-   CA 在接收到 consumer 的请求后
-   1. 将 HTTP 形式的请求解码为 Invocation 对象
-   2. 编码为用合适的形式发送给 PA
-   3. PA 以合适的形式返回结果
-   4. CA 将结果编码为 HTTP 返回给 consumer
- */
 public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
     private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
-
-    /**
-     *
-     * @param ctx
-     * @param msg
-     * @throws Exception
-     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         FullHttpRequest req = (FullHttpRequest) msg;
