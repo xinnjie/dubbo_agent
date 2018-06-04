@@ -83,6 +83,7 @@ public class ConnectManager {
 
     /**
      * 一次性创建所有到 PA 的连接, 总个数和权重和决定
+     * CA 右侧的连接们
      */
     private void initConnectToPA() {
         HashMap<Endpoint, List<ChannelFuture>> PAChannelFutures = new HashMap<>();
@@ -114,7 +115,7 @@ public class ConnectManager {
                                     Invocation invocation = (Invocation) msg;
                                     // todo selectConsumerChannel将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
                                     Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
-                                    logger.info("find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
+                                    logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                     consumerChannel.writeAndFlush(invocation);
                                 }
                             });

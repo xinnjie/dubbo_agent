@@ -27,6 +27,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     private Logger logger = LoggerFactory.getLogger(PAInitializer.class);
 
 
+    /*
+    PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
+     */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
@@ -38,7 +41,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         当读取到 CA 的数据后，将读到的 invocation 写入 provider 去
          */
-        p.addLast("sendToProvider", new ChannelInboundHandlerAdapter() {
+        p.addLast("transmit2provider", new ChannelInboundHandlerAdapter() {
             final ChannelFuture providerChannelFuture = providerFuture;
 
             @Override
@@ -47,7 +50,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
                 if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
-//                    logger.info("connected to provider successfully");
+                    logger.info("is about to send to provider");
                     providerChannel.writeAndFlush(invocation);
                 } else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
