@@ -42,7 +42,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         当读取到 CA 的数据后，将读到的 invocation 写入 provider 去
          */
         p.addLast("transmit2provider", new ChannelInboundHandlerAdapter() {
-            final ChannelFuture providerChannelFuture = providerFuture;
+            ChannelFuture providerChannelFuture = providerFuture;
 
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -53,7 +53,16 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                     logger.info("is about to send to provider + " + invocation.toString());
                     providerChannel.writeAndFlush(invocation);
                 } else if (providerFuture.isDone() & providerFuture.cause() != null) {
-                    logger.error("connection to provider not estabalished! : " + providerFuture.cause().getMessage());
+                    logger.error("connection to provider not estabalished! : " + providerFuture.cause().getMessage() + "   retrying");
+                    this.providerChannelFuture = bootstrapConnectToProvider(ch);
+                    providerChannelFuture.addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            Channel providerChannel = future.channel();
+                            logger.info("is about to send to provider + " + invocation.toString());
+                            providerChannel.writeAndFlush(invocation);
+                        }
+                    });
                 }
                 else {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
