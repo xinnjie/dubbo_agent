@@ -76,7 +76,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         这个当 consumer 传来请求时，将 HTTP POST 中内容提取出来构造一个 invocation，并写入到 PA 中
          */
-        p.addLast("ReadFromConsumer", new ReceiveConsumerHandler(providerChannelFuture));
+        p.addLast("transmit2PA", new ReceiveConsumerHandler(providerChannelFuture));
 
         /*
            当写入 Invocation 到 Consumer 时，
@@ -115,7 +115,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
                             @Override
                             public void channelRead(ChannelHandlerContext ctx_, Object msg) throws Exception {
                                 Invocation invocation = (Invocation) msg;
-                                    consumerChannel.write(invocation);
+                                    consumerChannel.writeAndFlush(invocation);
                             }
                         });
                     }

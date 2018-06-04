@@ -12,10 +12,9 @@ import io.netty.handler.codec.http.*;
 public class SendConsumerHandler extends ChannelOutboundHandlerAdapter{
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (msg instanceof Invocation) {
-            Invocation invocation = (Invocation) msg;
-            FullHttpRequest httpReq=new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,"CA");
-            httpReq.content().writeBytes(invocation.getResult().getBytes());
-        }
+        Invocation invocation = (Invocation) msg;
+        FullHttpRequest httpReq=new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,"CA");
+        httpReq.content().writeBytes(invocation.getResult().getBytes());
+        ctx.writeAndFlush(httpReq);
     }
 }

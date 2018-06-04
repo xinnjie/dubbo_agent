@@ -25,7 +25,7 @@ public class CacheResponseTest {
 
     @Before
     public void setUp() throws Exception {
-        long requestID = 5;
+        long requestID = 32;
         String arguments = "hkhdkfhakjf";
         invocation = new Invocation();
         invocation.setInterfaceName("com.alibaba.dubbo.performance.demo.provider.IHelloService");
@@ -56,6 +56,8 @@ public class CacheResponseTest {
 
 
         HashMap<Integer, FuncType> methodIDsCache = new HashMap<>();
+        methodIDsCache.put(invocation.getMethodID(), invocation.shallowCopy());
+
         EmbeddedChannel CADecodeChannel = new EmbeddedChannel(
                 new CacheDecoder(methodIDsCache, null)
         );
@@ -68,7 +70,6 @@ public class CacheResponseTest {
          */
         Invocation dubboResponse = new Invocation();
         dubboResponse.setRequestID(invocation.getRequestID());
-        ;
         dubboResponse.setResult(invocation.getResult());
 
         assertTrue(PAEncodeChannel.writeOutbound(dubboResponse));

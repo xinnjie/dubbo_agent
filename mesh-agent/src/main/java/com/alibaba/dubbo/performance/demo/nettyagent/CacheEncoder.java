@@ -20,11 +20,11 @@ import java.util.Random;
  */
 public class CacheEncoder extends MessageToByteEncoder{
     private final HashMap<Long, Integer> requestToMethodFirstCache;
+    private final HashMap<FuncType, Integer> methodIDs;
+
     //    public static final String NAME = "cache";
     private Logger logger = LoggerFactory.getLogger(CacheEncoder.class);
     protected static final short MAGIC = (short) 0xdacc;
-
-    private final HashMap<FuncType, Integer> methodIDs;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
 
@@ -142,9 +142,10 @@ public class CacheEncoder extends MessageToByteEncoder{
                 }
             }
 
-            synchronized (methodIDs) {
-                methodIDs.put(invocation.shallowCopy(), invocation.getMethodID());
-            }
+//            PA 中 加入 cache 由 decoding request 来做， encode response 时不要对 methodID 修改
+//            synchronized (methodIDs) {
+//                methodIDs.put(invocation.shallowCopy(), invocation.getMethodID());
+//            }
             isValid = true;
         }
         isCache = true;
