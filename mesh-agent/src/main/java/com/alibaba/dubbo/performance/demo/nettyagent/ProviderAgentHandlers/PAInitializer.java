@@ -89,6 +89,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                          final Channel PALeftChannel = leftChannel;
+
+                         // todo 高亮 CA 和 PA 的连接部分
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
                              ChannelPipeline pipeline = ch.pipeline();
