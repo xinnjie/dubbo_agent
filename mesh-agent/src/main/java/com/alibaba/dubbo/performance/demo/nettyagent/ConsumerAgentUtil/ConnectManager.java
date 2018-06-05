@@ -166,7 +166,9 @@ public class ConnectManager {
             this.request2CAChannel.put(requestID, consumerChannel);
         }
         Channel selected = PAChannels.get(random.nextInt(PAChannels.size()));
-        logger.info("CA sending to,  检查确保连接到了三个 PA" + getEndpoint(selected).toString());
+//        logger.info("CA sending to,  检查确保连接到了三个 PA" + getEndpoint(selected).toString());
+        logger.info("CA sending to " + getEndpoint(selected).toString());
+
         return selected;
     }
 

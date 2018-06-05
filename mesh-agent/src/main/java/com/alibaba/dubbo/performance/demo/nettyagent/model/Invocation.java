@@ -43,7 +43,7 @@ public class Invocation extends FuncType{
     private long requestID = -1;
     private int methodID = -1;
 
-    public static long getUniqueReqeustID() {
+    public static long getUniqueRequestID() {
         return atomicLong.getAndIncrement();
     }
     public static int getUniqueMethodID() {
@@ -148,8 +148,8 @@ public class Invocation extends FuncType{
     public String toString() {
         return "Invocation{" +
                 "methodName='" + this.getMethodName() + '\'' +
-                ", parameterTypes='" + this.getParameterTypes() + '\'' +
-                ", arguments='" + arguments + '\'' +
+//                ", parameterTypes='" + this.getParameterTypes() + '\'' +
+//                ", arguments='" + arguments + '\'' +
                 ", result='" + result + '\'' +
                 ", requestID=" + requestID +
                 ", methodID=" + methodID +

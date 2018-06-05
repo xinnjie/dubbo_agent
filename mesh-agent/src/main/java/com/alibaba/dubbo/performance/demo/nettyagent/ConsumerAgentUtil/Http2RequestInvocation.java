@@ -41,6 +41,7 @@ public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
             invocation.setInterfaceName(paramMap.get("interface"));
             //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
 //                invocation.setAttachment("path", paramMap.get("interface"));
+            logger.info("received from Consumer");
             ctx.fireChannelRead(invocation);
         } else {
             logger.warn("CA received non-post request from consumer");

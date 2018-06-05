@@ -29,6 +29,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
     /*
     PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
+    从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
      */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
@@ -39,7 +40,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
         /*
-        当读取到 CA 的数据后，将读到的 invocation 写入 provider 去
+        当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
         p.addLast("transmit2provider", new ChannelInboundHandlerAdapter() {
             ChannelFuture providerChannelFuture = providerFuture;
@@ -53,7 +54,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                     logger.info("is about to send to provider + " + invocation.toString());
                     providerChannel.writeAndFlush(invocation);
                 } else if (providerFuture.isDone() & providerFuture.cause() != null) {
-                    logger.error("connection to provider not estabalished! : " + providerFuture.cause().getMessage() + "   retrying");
+                    logger.error("connection to provider not established! : " + providerFuture.cause().getMessage() + "   retrying");
                     this.providerChannelFuture = bootstrapConnectToProvider(ch);
                     providerChannelFuture.addListener(new ChannelFutureListener() {
                         @Override

@@ -27,7 +27,7 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Invocation requestInvocation = (Invocation) msg;
-        long requestID = Invocation.getUniqueReqeustID();
+        long requestID = Invocation.getUniqueRequestID();
         requestInvocation.setRequestID(requestID);
         Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
 //        logger.info("sending to Channel " + providerChannel.toString());
