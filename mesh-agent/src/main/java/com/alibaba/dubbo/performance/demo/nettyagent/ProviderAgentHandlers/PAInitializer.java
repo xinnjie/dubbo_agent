@@ -51,16 +51,17 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
                 if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
-                    logger.info("is about to send to provider + " + invocation.toString());
+//                    logger.info("is about to send to provider + " + invocation.toString());
                     providerChannel.writeAndFlush(invocation);
                 } else if (providerFuture.isDone() & providerFuture.cause() != null) {
+                    // 假如连接错误，就尝试再次连接
                     logger.error("connection to provider not established! : " + providerFuture.cause().getMessage() + "   retrying");
                     this.providerChannelFuture = bootstrapConnectToProvider(ch);
                     providerChannelFuture.addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             Channel providerChannel = future.channel();
-                            logger.info("is about to send to provider + " + invocation.toString());
+//                            logger.info("is about to send to provider + " + invocation.toString());
                             providerChannel.writeAndFlush(invocation);
                         }
                     });
@@ -70,7 +71,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             Channel providerChannel = future.channel();
-                            logger.info("is about to send to provider + " + invocation.toString());
+//                            logger.info("is about to send to provider + " + invocation.toString());
                             providerChannel.writeAndFlush(invocation);
                         }
                     });
