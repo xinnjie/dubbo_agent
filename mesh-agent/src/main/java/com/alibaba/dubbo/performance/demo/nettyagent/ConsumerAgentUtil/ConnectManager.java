@@ -167,6 +167,7 @@ public class ConnectManager {
         }
         Channel selected = PAChannels.get(random.nextInt(PAChannels.size()));
 //        logger.info("CA sending to,  检查确保连接到了三个 PA" + getEndpoint(selected).toString());
+        if (!selected.isActive())
         logger.info("CA sending to " + getEndpoint(selected).toString());
 
         return selected;
