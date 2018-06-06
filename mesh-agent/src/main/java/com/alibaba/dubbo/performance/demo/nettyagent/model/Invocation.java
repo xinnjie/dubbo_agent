@@ -147,10 +147,10 @@ public class Invocation extends FuncType{
     @Override
     public String toString() {
         return "Invocation{" +
-                "methodName='" + this.getMethodName() + '\'' +
+//                "methodName='" + this.getMethodName() + '\'' +
 //                ", parameterTypes='" + this.getParameterTypes() + '\'' +
-                ", arguments='" + arguments + '\'' +
-                ", result='" + result + '\'' +
+//                ", arguments='" + arguments + '\'' +
+//                ", result='" + result + '\'' +
                 ", requestID=" + requestID +
                 ", methodID=" + methodID +
                 '}';

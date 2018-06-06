@@ -53,7 +53,7 @@ public class ConnectManager {
         }
 
 
-        List<Integer> weight = Arrays.asList(6, 4, 2);
+        List<Integer> weight = Arrays.asList(24, 16, 8);
         assert endpoints.size() == weight.size();
         weightedEndpoints = new ArrayList<>();
         for (int i = 0; i < endpoints.size(); ++i) {
