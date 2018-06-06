@@ -4,6 +4,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.*;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -48,6 +49,7 @@ public class NettyConsumerAgent {
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
+//                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, 32 * 1024)
 //                        .option(ChannelOption.SO_KEEPALIVE, true)
 //                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)

@@ -1,7 +1,9 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder0;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder0;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
@@ -29,7 +31,7 @@ public class ConnectManager {
     private final List<Endpoint> endpoints;
     private HashMap<Endpoint, List<Channel>> endpoint2Channel = new HashMap<>();
     private List<Channel> PAChannels = new ArrayList<>();
-    final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
+    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
 
     /*
     语义上讲这两份 cache 是属于 CA 的
@@ -96,8 +98,8 @@ public class ConnectManager {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
                             // 由于只有在 response 端会用 FirstTime Cache 这里传入了 null，表示不需要
-                            pipeline.addLast("CacheEncoder", new CacheEncoder(endpointMethodsIDs.get(endpoint), null));
-                            pipeline.addLast("CacheDecoder", new CacheDecoder(endpointMethods.get(endpoint), null));
+                            pipeline.addLast("CacheEncoder", new CacheEncoder0(endpointMethodsIDs.get(endpoint), null));
+                            pipeline.addLast("CacheDecoder", new CacheDecoder0(endpointMethods.get(endpoint), null));
                             // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
                             pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
                                 /*
@@ -111,6 +113,7 @@ public class ConnectManager {
                                     Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
                                     if (consumerChannel != null) {
                                         logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
+                                        // 将来自 PA 的 response 发回给 Consumer
                                         consumerChannel.writeAndFlush(invocation);
                                     } else {
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());

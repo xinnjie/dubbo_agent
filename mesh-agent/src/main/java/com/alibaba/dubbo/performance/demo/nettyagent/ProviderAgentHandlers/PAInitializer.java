@@ -1,9 +1,6 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcDecoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.*;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.bootstrap.Bootstrap;
@@ -37,8 +34,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         ChannelPipeline p = ch.pipeline();
         // PA 连接到 provider
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
-        p.addLast("cacheEncoder", new CacheEncoder(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
-        p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
+        p.addLast("cacheEncoder", new CacheEncoder0(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
+        p.addLast("cacheDecoder", new CacheDecoder0(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
@@ -54,6 +51,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                     Channel providerChannel = providerChannelFuture.channel();
                     if (providerChannel.isActive()) {
 //                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
+                        // 将收到的 request 发给 provider
                         providerChannel.writeAndFlush(invocation);
                     } else {
                         logger.error("connection to provider down! 并且还没有被恢复");

@@ -149,7 +149,7 @@ public class Invocation extends FuncType{
         return "Invocation{" +
                 "methodName='" + this.getMethodName() + '\'' +
 //                ", parameterTypes='" + this.getParameterTypes() + '\'' +
-//                ", arguments='" + arguments + '\'' +
+                ", arguments='" + arguments + '\'' +
                 ", result='" + result + '\'' +
                 ", requestID=" + requestID +
                 ", methodID=" + methodID +
