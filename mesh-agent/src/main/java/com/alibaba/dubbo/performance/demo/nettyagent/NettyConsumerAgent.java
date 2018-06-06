@@ -9,6 +9,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.EtcdRegistry;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.IRegistry;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +49,7 @@ public class NettyConsumerAgent {
 //                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
-//                        .handler(new LoggingHandler(LogLevel.INFO))
+                        .handler(new LoggingHandler(LogLevel.WARN))
                         .childHandler(new CAInitializer(connectManager));
 
                 Channel ch = b.bind().sync().channel();

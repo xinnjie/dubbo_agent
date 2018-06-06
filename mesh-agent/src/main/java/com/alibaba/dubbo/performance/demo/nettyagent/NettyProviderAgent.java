@@ -11,10 +11,14 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 
 public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
@@ -35,6 +39,7 @@ public class NettyProviderAgent {
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             //  TODO 要给 worker 分配几个线程?
             EventLoopGroup workerGroup = new NioEventLoopGroup();
+            waitProvider();
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -42,7 +47,7 @@ public class NettyProviderAgent {
 //                        .option(ChannelOption.TCP_NODELAY, true)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
-//                        .handler(new LoggingHandler(LogLevel.INFO))
+                        .handler(new LoggingHandler(LogLevel.WARN))
                         .childHandler(new PAInitializer());
 
                 Channel ch = b.bind().sync().channel();
@@ -55,6 +60,35 @@ public class NettyProviderAgent {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void waitProvider() {
+        boolean scanning=true;
+        int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
+
+        Socket sock = new Socket();
+        while(scanning) {
+            try {
+                InetSocketAddress address =  new InetSocketAddress("127.0.0.1", port);
+                sock.connect(address);
+                scanning=false;
+                logger.info("Connected to provider, so provider must have been started");
+            }
+            catch(IOException e) {
+                logger.info("Connect to provider failed(the provider may have not started, waiting and trying again");
+                try {
+                    Thread.sleep(2000);//2 seconds
+                } catch(InterruptedException ie){
+                    ie.printStackTrace();
+                }
+            }
+        }
+        try {
+            sock.close();
+        } catch (IOException e) {
+            logger.error("can not disconnect to provider. error message:" + e.getMessage());
+        }
+
     }
 
 }

@@ -120,7 +120,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         invocation.setRequestID(requestId);
         invocation.setResult(new String(subArray));
 
-//        logger.info("received response from provider: " + invocation.toString());
+        logger.info("PA received response from provider: " + invocation.toString());
 
         if (getStatusMessage(status).equals("UNKNOWN STATUS")) {
             logger.info("dubbo response received UNKNOWN response");

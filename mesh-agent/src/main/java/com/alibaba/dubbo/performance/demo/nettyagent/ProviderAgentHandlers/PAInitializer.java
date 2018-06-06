@@ -28,14 +28,14 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
 
     /*
-    PA 左边连接到 CA 的 channel 设置，包括一旦收到消息自动转发给 Provider
+    PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
     从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
      */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
         // PA 连接到 provider
-        Channel theProviderChannel =  bootstrapConnectToProvider(ch);
+        ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
         p.addLast("cacheEncoder", new CacheEncoder(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
         p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
@@ -43,23 +43,37 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
         p.addLast("transmit2provider", new ChannelInboundHandlerAdapter() {
-            Channel providerChannel = theProviderChannel;
+            ChannelFuture providerChannelFuture = providerFuture;
 
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                 Invocation invocation = (Invocation) msg;
 
-                if (providerChannel.isActive()) {
-                    providerChannel.writeAndFlush(invocation);
-                } else {
-                    providerChannel = bootstrapConnectToProvider(ch);
-                    providerChannel.writeAndFlush(invocation);
+                if (providerChannelFuture.isSuccess()) {
+                    Channel providerChannel = providerChannelFuture.channel();
+                    if (providerChannel.isActive()) {
+                        providerChannel.writeAndFlush(invocation);
+                    } else {
+                        logger.error("connection to provider down! 并且还没有被恢复");
+                    }
                 }
+                else {
+                    logger.info("connection to provider is not established yet, add a listener");
+                    providerChannelFuture.addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            logger.info("connection to provider established，and listener is called");
+                            Channel providerChannel = future.channel();
+                            providerChannel.writeAndFlush(invocation);
+                        }
+                    });
+                }
+
             }
         });
 
     }
-    public Channel bootstrapConnectToProvider(SocketChannel leftChannel) {
+    public ChannelFuture bootstrapConnectToProvider(SocketChannel leftChannel) {
         Bootstrap bootstrap = new Bootstrap()
                 .group(leftChannel.eventLoop())
                 .option(ChannelOption.SO_KEEPALIVE, true)
@@ -90,16 +104,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                      }
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
-        Channel providerChannel = null;
-        do {
-            try {
-                providerChannel = bootstrap.connect("127.0.0.1", port).sync().channel();
-            } catch (InterruptedException e) {
-                logger.error("can not connect to provider, " + e.getMessage());
-            }
-        } while (providerChannel == null || !providerChannel.isActive());
 
-        return providerChannel;
+        return bootstrap.connect("127.0.0.1", port);
 
     }
 }

@@ -62,7 +62,6 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 Object msg = null;
                 try {
                     msg = doDecode(byteBuf);
-                    //todo msg
                     assert  msg != null;
                 } catch (Exception e) {
                     throw e;
