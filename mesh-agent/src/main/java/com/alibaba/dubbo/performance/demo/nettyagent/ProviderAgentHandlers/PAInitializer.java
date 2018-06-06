@@ -34,8 +34,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         ChannelPipeline p = ch.pipeline();
         // PA 连接到 provider
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
-        p.addLast("cacheEncoder", new CacheEncoder0(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
-        p.addLast("cacheDecoder", new CacheDecoder0(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
+        p.addLast("cacheEncoder", new CacheEncoder(PAInitializer.methodIDsCache, PAInitializer.requestToMethodFirstCache));
+        p.addLast("cacheDecoder", new CacheDecoder(PAInitializer.methodsCache, PAInitializer.requestToMethodFirstCache));
 
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去

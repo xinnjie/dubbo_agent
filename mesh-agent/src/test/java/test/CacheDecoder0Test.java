@@ -1,8 +1,6 @@
 package test;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder0;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder0;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;

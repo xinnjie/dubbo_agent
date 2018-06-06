@@ -123,9 +123,10 @@ public class CacheDecoder extends ByteToMessageDecoder{
 //            byteBuf.readerIndex(startIndex);
             return DecodeResult.NEED_MORE_INPUT;
         }
+
+
         // todo todo  这个坑了我两天时间！！！！！
         // byteBuf.readerIndex(REQEUST_ID_INDEX);
-
         byteBuf.readerIndex(startIndex + REQEUST_ID_INDEX);
         final long requestId = byteBuf.readLong();
         // 跳过 data length
