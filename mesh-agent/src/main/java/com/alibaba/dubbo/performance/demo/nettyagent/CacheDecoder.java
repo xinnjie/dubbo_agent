@@ -2,6 +2,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -21,8 +23,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
     private Logger logger = LoggerFactory.getLogger(CacheDecoder.class);
 
     protected static final short MAGIC = (short) 0xdacc;
-    private final HashMap<Long, Integer> requestToMethodFirstCache;
-    private final HashMap<Integer, FuncType> methods;
+    private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
+    private final ConcurrentHashMap<Integer, FuncType> methods;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
 
@@ -45,7 +47,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
      *                                  这个 requestID 和新缓存的 methodID 将被加入到这个 map 中，方便 encode response 时，
      *                                  将方法信息和 method 的对应关系传回给 CA 的 response decoder
      */
-    public CacheDecoder(HashMap<Integer, FuncType> methodsCache, HashMap<Long, Integer> requestToMethodFirstCache) {
+    public CacheDecoder(ConcurrentHashMap<Integer, FuncType> methodsCache, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
         super();
         this.methods = methodsCache;
         this.requestToMethodFirstCache = requestToMethodFirstCache;
@@ -70,9 +72,14 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 if (msg == DecodeResult.NEED_MORE_INPUT) {
                     byteBuf.readerIndex(savedReaderIndex);
                     break;
+                } else if (msg == DecodeResult.DECODE_ERROR) {
+                    byteBuf.readerIndex(savedReaderIndex);
+                    logger.error("Decode Error, the bytes received is {}",
+                            ByteBufUtil.hexDump(byteBuf));
+                    byteBuf.clear();
+                }else{
+                    list.add(msg);
                 }
-
-                list.add(msg);
             } while (byteBuf.isReadable());
         } finally {
             if (byteBuf.isReadable()) {
@@ -83,7 +90,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
 
     }
     enum DecodeResult {
-        NEED_MORE_INPUT, SKIP_INPUT
+        NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
 
@@ -93,7 +100,11 @@ public class CacheDecoder extends ByteToMessageDecoder{
         if (readable < HEADER_LENGTH_MIN) {
             return DecodeResult.NEED_MORE_INPUT;
         }
-
+        final short code = byteBuf.getShort(0);
+        // todo 这个时候服务器应该停下
+        if (code != MAGIC) {
+            return DecodeResult.DECODE_ERROR;
+        }
         final boolean isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0 ;
         final boolean isCache = (byteBuf.getByte(2) & FLAG_CACHE) != 0;
         final boolean isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0;
@@ -126,7 +137,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
             // todo 目前认为方法词典缓存足够，所以从 PA 接受到的 response 都是 cache 过的
             assert isCache;
             if (isCache) {
-                invocation.setMethodID(byteBuf.readInt());;
+                invocation.setMethodID(byteBuf.readInt());
                 if (isValid) {
                     //todo 当 Valid 有效时，说明 response 第一次缓存 method id
                     assert !methods.containsKey(invocation.getMethodID());
@@ -135,22 +146,34 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                     String[] parts = body.split("\n");
                     assert parts.length >= 4;
-                    invocation.setMethodName(parts[0]);
-                    invocation.setParameterTypes(parts[1]);
-                    invocation.setInterfaceName(parts[2]);
-                    invocation.setResult(parts[3]);
-                    synchronized (methods) {
+                    if (parts.length >= 4) {
+                        invocation.setMethodName(parts[0]);
+                        invocation.setParameterTypes(parts[1]);
+                        invocation.setInterfaceName(parts[2]);
+                        if (!methods.containsKey(invocation.getMethodID())) {
+                            logger.info("add new cache method: {}", invocation.toString());
+                        } else {
+                            logger.warn("method is already in cache, before: {}, after: {}", methods.get(invocation.getMethodID()), invocation);
+                        }
+                        invocation.setResult(parts[3]);
                         methods.put(invocation.getMethodID(), invocation.shallowCopy());
+                    } else {
+                        logger.error("can not decode. to few parts (should be 4 parts): {}", parts);
+                        return DecodeResult.DECODE_ERROR;
                     }
                 }else {
                     String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                     String[] parts = body.split("\n");
                     assert parts.length >= 1;
+                    if (parts.length < 1) {
+                        logger.error("can not decode. to few parts (should be 1 parts): {}", parts);
+                        return DecodeResult.DECODE_ERROR;
+                    }
                     invocation.setResult(parts[0]);
                 }
-                logger.info("received response from PA: " + invocation.toString());
-                return invocation;
             }
+            logger.info("received response from PA: " + invocation.toString());
+            return invocation;
 
         }
         /* ************ request decode ************************
@@ -196,17 +219,15 @@ public class CacheDecoder extends ByteToMessageDecoder{
 
                 // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
                 int newMethodID = Invocation.getUniqueMethodID();
-                synchronized (this.methods) {
-                    this.methods.put(newMethodID, invocation.shallowCopy());
-                }
-                synchronized (this.requestToMethodFirstCache) {
-                    this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
-                }
+                invocation.setMethodID(newMethodID);
+                this.methods.put(newMethodID, invocation.shallowCopy());
+                this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
+                logger.info("new functype insert into cache: {}", invocation);
             }
             logger.info("received from CA: " + invocation.toString());
             return invocation;
         }
-        return null;
+
     }
 
 }

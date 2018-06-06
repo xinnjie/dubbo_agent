@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
 
@@ -54,13 +55,13 @@ public class CacheResponseTest {
         /*
         构建出一个给 PA response encoder 用的缓存，这个缓存原本应该在 decode request 时被构建
          */
-        HashMap<FuncType, Integer> methodsCache = new HashMap<>();
+        ConcurrentHashMap<FuncType, Integer> methodsCache = new ConcurrentHashMap<>();
         methodsCache.put(invocation.shallowCopy(), invocation.getMethodID());
-        HashMap<Long, Integer> requestToMethodFirstCache = new HashMap<>();
+        ConcurrentHashMap<Long, Integer> requestToMethodFirstCache = new ConcurrentHashMap<>();
         requestToMethodFirstCache.put(invocation.getRequestID(), invocation.getMethodID());
 
 
-        HashMap<Integer, FuncType> methodIDsCache = new HashMap<>();
+        ConcurrentHashMap<Integer, FuncType> methodIDsCache = new ConcurrentHashMap<>();
         methodIDsCache.put(invocation.getMethodID(), invocation.shallowCopy());
 
         EmbeddedChannel CADecodeChannel = new EmbeddedChannel(

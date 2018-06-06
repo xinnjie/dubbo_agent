@@ -66,8 +66,8 @@ public class NettyProviderAgent {
         boolean scanning=true;
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
 
-        Socket sock = new Socket();
         while(scanning) {
+            Socket sock = new Socket();
             try {
                 InetSocketAddress address =  new InetSocketAddress("127.0.0.1", port);
                 sock.connect(address);
@@ -75,19 +75,21 @@ public class NettyProviderAgent {
                 logger.info("Connected to provider, so provider must have been started");
             }
             catch(IOException e) {
-                logger.info("Connect to provider failed(the provider may have not started, waiting and trying again");
+                logger.info("Connect to provider at port " + port + " failed (the provider may have not started, waiting and trying again");
                 try {
                     Thread.sleep(2000);//2 seconds
                 } catch(InterruptedException ie){
                     ie.printStackTrace();
                 }
+            } finally {
+                try {
+                    sock.close();
+                } catch (IOException e) {
+                    logger.error("can not disconnect to provider. error message:" + e.getMessage());
+                }
             }
         }
-        try {
-            sock.close();
-        } catch (IOException e) {
-            logger.error("can not disconnect to provider. error message:" + e.getMessage());
-        }
+
 
     }
 

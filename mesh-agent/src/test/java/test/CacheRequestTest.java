@@ -12,6 +12,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
 
@@ -24,10 +25,10 @@ import static org.junit.Assert.*;
 public class CacheRequestTest {
     @Test
     public void testCacheRequest() throws Exception {
-        HashMap<FuncType, Integer> methodsCache = new HashMap<>();
-        HashMap<Integer, FuncType> methodIDsCache = new HashMap<>();
+        ConcurrentHashMap<FuncType, Integer> methodsCache = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Integer, FuncType> methodIDsCache = new ConcurrentHashMap<>();
         EmbeddedChannel PADecodeChannel = new EmbeddedChannel(
-                new CacheDecoder(methodIDsCache, new HashMap<>())
+                new CacheDecoder(methodIDsCache, new ConcurrentHashMap<>())
         );
 
         EmbeddedChannel CAEncodeChannel = new EmbeddedChannel(

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by gexinjie on 2018/6/4.
@@ -28,13 +29,13 @@ public class ConnectManager {
     private final List<Endpoint> endpoints;
     private HashMap<Endpoint, List<Channel>> endpoint2Channel = new HashMap<>();
     private List<Channel> PAChannels = new ArrayList<>();
-    final private HashMap<Long, Channel> request2CAChannel= new HashMap<>();
+    final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
 
     /*
     语义上讲这两份 cache 是属于 CA 的
      */
-    private HashMap<Endpoint, HashMap<FuncType, Integer>> endpointMethodsIDs = null;
-    private HashMap<Endpoint, HashMap<Integer, FuncType>> endpointMethods = null;
+    private HashMap<Endpoint, ConcurrentHashMap<FuncType, Integer>> endpointMethodsIDs = null;
+    private HashMap<Endpoint, ConcurrentHashMap<Integer, FuncType>> endpointMethods = null;
 
     public ConnectManager(EventLoopGroup eventLoopGroup, List<Endpoint> endpoints) {
         this.eventLoopGroup = eventLoopGroup;
@@ -52,8 +53,6 @@ public class ConnectManager {
         }
 
 
-//        // 原来的想法：带权重的 weighted endpoints 整个类共享， 还是尽量避免使用 static 变量
-//        if (weightedEndpoints == null) {
         List<Integer> weight = Arrays.asList(6, 4, 2);
         assert endpoints.size() == weight.size();
         weightedEndpoints = new ArrayList<>();
@@ -63,22 +62,16 @@ public class ConnectManager {
             }
         }
         weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
-//        }
 
-        // 因为 CA 只有一个，对每个单个 Provider 的缓存都是一样的，所以两部分关于 FuncType 的缓存整个类共享
-//        if (endpointMethodsIDs == null) {
         endpointMethodsIDs = new HashMap<>();
         for (Endpoint endpoint : endpoints) {
-            endpointMethodsIDs.put(endpoint, new HashMap<>());
+            endpointMethodsIDs.put(endpoint, new ConcurrentHashMap<>());
         }
-//        }
 
-//        if (endpointMethods == null) {
         endpointMethods = new HashMap<>();
         for (Endpoint endpoint : endpoints) {
-            endpointMethods.put(endpoint, new HashMap<>());
+            endpointMethods.put(endpoint, new ConcurrentHashMap<>());
         }
-//        }
     }
 
     /**
@@ -116,8 +109,12 @@ public class ConnectManager {
                                     Invocation invocation = (Invocation) msg;
                                     // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
                                     Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
-                                    logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
-                                    consumerChannel.writeAndFlush(invocation);
+                                    if (consumerChannel != null) {
+                                        logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
+                                        consumerChannel.writeAndFlush(invocation);
+                                    } else {
+                                        logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());
+                                    }
                                 }
                             });
                         }
@@ -151,13 +148,10 @@ public class ConnectManager {
 
     private Channel getAccordingConsumerChannel(long requestID) {
         Channel consumerChannel = this.request2CAChannel.get(requestID);
-        assert consumerChannel != null;
         if (consumerChannel == null) {
             logger.error("request not in request table, maybe already processed? requestID is :" + requestID);
         }
-        synchronized (this.request2CAChannel) {
-            this.request2CAChannel.remove(requestID);
-        }
+        this.request2CAChannel.remove(requestID);
         return consumerChannel;
     }
 
@@ -167,14 +161,8 @@ public class ConnectManager {
      * @return
      */
     public Channel getProviderChannel(Channel consumerChannel, long requestID) {
-        synchronized (this.request2CAChannel) {
-            this.request2CAChannel.put(requestID, consumerChannel);
-        }
+        this.request2CAChannel.put(requestID, consumerChannel);
         Channel selected = PAChannels.get(random.nextInt(PAChannels.size()));
-//        logger.info("CA sending to,  检查确保连接到了三个 PA" + getEndpoint(selected).toString());
-        if (!selected.isActive())
-        logger.info("CA sending to " + getEndpoint(selected).toString());
-
         return selected;
     }
 

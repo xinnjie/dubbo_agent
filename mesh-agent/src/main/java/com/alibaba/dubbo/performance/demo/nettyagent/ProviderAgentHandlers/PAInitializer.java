@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by gexinjie on 2018/6/1.
@@ -21,9 +22,9 @@ import java.util.HashMap;
 public class PAInitializer extends ChannelInitializer<SocketChannel> {
     // 语义上来说这三份 cache 都属于 PA
     // 每个 PA 内部所有 handler 共用一组 Cache, 由于一个服务器上只运行一个PA,这组 cache 可以是全类共享
-    static private final HashMap<FuncType, Integer> methodIDsCache = new HashMap<>();
-    static private final HashMap<Integer, FuncType> methodsCache = new HashMap<>();
-    static private final HashMap<Long, Integer> requestToMethodFirstCache = new HashMap<>();
+    static private final ConcurrentHashMap<FuncType, Integer> methodIDsCache = new ConcurrentHashMap<>();
+    static private final ConcurrentHashMap<Integer, FuncType> methodsCache = new ConcurrentHashMap<>();
+    static private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache = new ConcurrentHashMap<>();
     private Logger logger = LoggerFactory.getLogger(PAInitializer.class);
 
 
@@ -52,6 +53,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 if (providerChannelFuture.isSuccess()) {
                     Channel providerChannel = providerChannelFuture.channel();
                     if (providerChannel.isActive()) {
+//                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
                         providerChannel.writeAndFlush(invocation);
                     } else {
                         logger.error("connection to provider down! 并且还没有被恢复");
@@ -62,9 +64,13 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                     providerChannelFuture.addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
-                            logger.info("connection to provider established，and listener is called");
-                            Channel providerChannel = future.channel();
-                            providerChannel.writeAndFlush(invocation);
+                            if (future.isSuccess()) {
+                                logger.info("connection to provider established，and listener is called");
+                                Channel providerChannel = future.channel();
+                                providerChannel.writeAndFlush(invocation);
+                            } else {
+                                logger.error("connection to provider failed error message: " + future.cause().getMessage());
+                            }
                         }
                     });
                 }

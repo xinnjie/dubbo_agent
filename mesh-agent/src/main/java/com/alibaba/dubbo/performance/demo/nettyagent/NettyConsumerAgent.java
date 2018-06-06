@@ -14,7 +14,9 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +43,7 @@ public class NettyConsumerAgent {
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
+            waitProviderAgent();
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
             try {
                 ServerBootstrap b = new ServerBootstrap();
@@ -64,4 +67,35 @@ public class NettyConsumerAgent {
         }
     }
 
+    private void waitProviderAgent() {
+        boolean scanning=true;
+
+        for (Endpoint endpoint :
+                endpoints) {
+            while (scanning) {
+                Socket sock = new Socket();
+                try {
+                    InetSocketAddress address = new InetSocketAddress(endpoint.getHost(), endpoint.getPort());
+                    sock.connect(address);
+                    scanning = false;
+                    logger.info("Connected to provider, so provider must have been started");
+                } catch (IOException e) {
+                    logger.info("Connect to provider at " + endpoint.getHost() + ":" + endpoint.getPort() + " failed (the provider may have not started) waiting and trying again");
+                    try {
+                        Thread.sleep(2000);//2 seconds
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
+                } finally {
+                    try {
+                        sock.close();
+                    } catch (IOException e) {
+                        logger.error("can not disconnect to provider. error message:" + e.getMessage());
+                    }
+                }
+            }
+
+        }
+
+    }
 }

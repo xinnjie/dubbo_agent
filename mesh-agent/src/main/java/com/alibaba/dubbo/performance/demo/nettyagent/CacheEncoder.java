@@ -11,13 +11,14 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by gexinjie on 2018/5/30.
  */
 public class CacheEncoder extends MessageToByteEncoder{
-    private final HashMap<Long, Integer> requestToMethodFirstCache;
-    private final HashMap<FuncType, Integer> methodIDs;
+    private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
+    private final ConcurrentHashMap<FuncType, Integer> methodIDs;
 
     //    public static final String NAME = "cache";
     private Logger logger = LoggerFactory.getLogger(CacheEncoder.class);
@@ -59,7 +60,7 @@ public class CacheEncoder extends MessageToByteEncoder{
      *                                  当encode 的 response 的方法信息第一次被缓存时，response encoder 可以通过 requestID 得到对应的被缓存的 methodID
      *                                  并将这个 methodID 发给 CA，告诉它这个方法被缓存了。
      */
-    public CacheEncoder(HashMap<FuncType, Integer> methodIDsCache, HashMap<Long, Integer> requestToMethodFirstCache) {
+    public CacheEncoder(ConcurrentHashMap<FuncType, Integer> methodIDsCache, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
         super();
         this.methodIDs = methodIDsCache;
         this.requestToMethodFirstCache = requestToMethodFirstCache;
@@ -125,11 +126,14 @@ public class CacheEncoder extends MessageToByteEncoder{
           ******************************************************/
         Boolean isValid = false;
         long requestID = invocation.getRequestID();
+        /*
+        如果 encode 的 response 方法类型是第一次缓存的，需要将方法信息传回给 CA（告诉 CA 这个方法被缓存了）
+        如何知道是第一次缓存：decode request 是会将第一次遇到的方法做缓存，把对应的 requestID 记录下来。encode 时通过比对 requestID 可以知道方法是否刚被缓存过
+         */
         if (this.requestToMethodFirstCache.containsKey(requestID)) {
+            isValid = true;
             int cachedMethodID = this.requestToMethodFirstCache.get(requestID);
-            synchronized (this.requestToMethodFirstCache) {
-                this.requestToMethodFirstCache.remove(requestID);
-            }
+            this.requestToMethodFirstCache.remove(requestID);
 
             // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
             // todo 这里用了遍历查找methodID 对应的方法
@@ -139,8 +143,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                     break;
                 }
             }
-
-            isValid = true;
+            logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;
 
@@ -149,7 +152,10 @@ public class CacheEncoder extends MessageToByteEncoder{
         byte[] header = new byte[HeaderLength];
         Bytes.short2bytes(MAGIC, header);
         //todo remove assert
-        assert invocation.getRequestID() != -1;
+//        assert invocation.getRequestID() != -1;
+        if (invocation.getRequestID() == -1) {
+            logger.error("request ID should not be -1: {}", invocation);
+        }
         Bytes.long2bytes(invocation.getRequestID(), header, REQEUST_ID_INDEX);
         if (isCache) {
             header[2] |= FLAG_CACHE;

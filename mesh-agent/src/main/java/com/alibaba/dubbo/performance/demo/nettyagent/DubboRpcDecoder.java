@@ -121,16 +121,11 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         invocation.setResult(new String(subArray));
 
         logger.info("PA received response from provider: " + invocation.toString());
-
-        if (getStatusMessage(status).equals("UNKNOWN STATUS")) {
-            logger.info("dubbo response received UNKNOWN response");
-            return DecodeResult.SKIP_INPUT;
+        if (status == 20) {
+            return invocation;
         }
-        if (!getStatusMessage(status).equals("Ok")) {
-            logger.info("dubbo response received " + getStatusMessage(status));
-            return DecodeResult.SKIP_INPUT;
-        }
-        return invocation;
+        logger.error("dubbo response received " + getStatusMessage(status));
+        return DecodeResult.SKIP_INPUT;
     }
 
     private String getStatusMessage(byte status) {
