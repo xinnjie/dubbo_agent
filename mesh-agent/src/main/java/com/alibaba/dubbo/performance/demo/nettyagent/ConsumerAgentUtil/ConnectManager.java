@@ -88,7 +88,11 @@ public class ConnectManager {
      *
      *
      * option:
-     * ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK 和 channelWritabilityChanged() 配合进行对发送数据的聚集，而不是每次收到一条 invocation 就发送，减少 socket send 的调用次数
+     *   *** 尝试了一下这条路不通 A<->B 这种情况可以用 watermark 聚集数据
+     *   但是 A->B->C
+     *              | 这种就没办法触发下一级的 inbound handler
+     *        A<-B<-C
+     *    ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK 和 channelWritabilityChanged() 配合进行对发送数据的聚集，而不是每次收到一条 invocation 就发送，减少 socket send 的调用次数
      */
     private void initConnectToPA() {
         HashMap<Endpoint, List<ChannelFuture>> PAChannelFutures = new HashMap<>();
@@ -103,7 +107,7 @@ public class ConnectManager {
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
+//                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
@@ -125,14 +129,11 @@ public class ConnectManager {
                                     if (consumerChannel != null) {
                                         logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
+                                        // 这里不要等待，只有发回回应，Consumer 才会继续发请求
                                         consumerChannel.writeAndFlush(invocation);
                                     } else {
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());
                                     }
-                                }
-                                @Override
-                                public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-                                    ctx.flush();
                                 }
                             });
                         }

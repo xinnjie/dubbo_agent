@@ -5,6 +5,8 @@ import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by gexinjie on 2018/6/7.
  */
@@ -13,14 +15,11 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
 
     ChannelFuture providerChannelFuture;
 
+    AtomicInteger count = new AtomicInteger();
     public Transmit2provider(ChannelFuture providerChannelFuture) {
         this.providerChannelFuture = providerChannelFuture;
     }
 
-    @Override
-    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        ctx.flush();
-    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -44,7 +43,11 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
                     if (future.isSuccess()) {
                         logger.info("connection to provider established，and listener is called");
                         Channel providerChannel = future.channel();
-                        providerChannel.write(invocation);
+                        if (count.incrementAndGet() % 10 != 0) {
+                            providerChannel.write(invocation);
+                        } else {
+                            providerChannel.writeAndFlush(invocation);
+                        }
                     } else {
                         logger.error("connection to provider failed error message: " + future.cause().getMessage());
                     }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/6/1.
@@ -54,13 +55,12 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
+//                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
 
 //                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                          final Channel PALeftChannel = leftChannel;
-
                          // todo 高亮 CA 和 PA 的连接部分
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
@@ -68,21 +68,23 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
+                                 AtomicInteger count = new AtomicInteger();
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
-                                     if (PALeftChannel.isActive()) {
-                                        PALeftChannel.write(invocation);
+//                                     if (PALeftChannel.isActive()) {
+                                     if (count.incrementAndGet() % 10 != 0) {
+                                         PALeftChannel.write(invocation);
                                      } else {
-                                         logger.error("connection between CA and PA is broken");
+                                         PALeftChannel.writeAndFlush(invocation);
                                      }
+//                                     } else {
+//                                         logger.error("connection between CA and PA is broken");
+//                                     }
                                  }
                              });
                          }
-                             @Override
-                             public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-                                 ctx.flush();
-                             }
+
                          }
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
