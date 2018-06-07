@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/5/28.
@@ -47,6 +48,7 @@ public class NettyConsumerAgent {
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             waitProviderAgent();
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
+            AtomicInteger sendCount = new AtomicInteger();
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -59,7 +61,7 @@ public class NettyConsumerAgent {
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
-                        .childHandler(new CAInitializer(connectManager));
+                        .childHandler(new CAInitializer(connectManager, sendCount));
 
                 Channel ch = b.bind().sync().channel();
                 ch.closeFuture().sync();

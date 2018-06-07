@@ -11,14 +11,19 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
+ 将这个 handler 标记为 sharable 达到共享count的目的
+ */
+@ChannelHandler.Sharable
 public class Transmit2PA extends ChannelInboundHandlerAdapter {
     private final ConnectManager connectManger;
     private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
 
 
-    AtomicInteger count = new AtomicInteger();
-    public Transmit2PA(ConnectManager manager) {
+    final AtomicInteger count;
+    public Transmit2PA(ConnectManager manager, AtomicInteger count) {
         this.connectManger = manager;
+        this.count = count;
     }
 
     /**
@@ -34,7 +39,8 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
         requestInvocation.setRequestID(requestID);
         Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
 //        logger.info("sending to Channel " + providerChannel.toString());
-        if (count.incrementAndGet() % 20 != 0) {
+        logger.info("从 CA 传向 PA count: {}", count.get());
+        if (count.incrementAndGet() % 10 != 0) {
             providerChannel.write(requestInvocation);
         } else {
             // todo 按照发送数量 flush

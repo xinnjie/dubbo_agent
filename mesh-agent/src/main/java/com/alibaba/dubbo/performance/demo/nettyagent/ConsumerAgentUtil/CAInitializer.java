@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/5/28.
@@ -18,8 +19,10 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
     private Logger logger = LoggerFactory.getLogger(CAInitializer.class);
 
 
-    public CAInitializer(ConnectManager manager) {
+    final AtomicInteger sendCount;
+    public CAInitializer(ConnectManager manager,  AtomicInteger sendCount) {
         this.connectManager = manager;
+        this.sendCount = sendCount;
     }
 
     /*
@@ -44,7 +47,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
          */
         p.addLast("http2invocation", new Http2RequestInvocation());
         // Transmit2PA 必须把 invocation 的 requestID 传给 connectManager
-        p.addLast("transmit2PA", new Transmit2PA(connectManager));
+        p.addLast("transmit2PA", new Transmit2PA(connectManager, this.sendCount));
 
         /*
            当写入 Invocation 到 Consumer 时，
