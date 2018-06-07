@@ -11,6 +11,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.WriteBufferWaterMark;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -50,8 +51,7 @@ public class NettyProviderAgent {
                         .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
                         .childOption(ChannelOption.TCP_NODELAY, true)
-                        .childOption(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
-                        .childOption(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 600)
+                        .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
