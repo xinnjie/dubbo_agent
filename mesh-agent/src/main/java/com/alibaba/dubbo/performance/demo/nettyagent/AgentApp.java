@@ -7,7 +7,7 @@ import io.netty.util.ResourceLeakDetector;
  */
 public class AgentApp {
     public static void main(String[] args) {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+//        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
 
         String type = System.getProperty("type");   // 获取type参数
         if ("consumer".equals(type)){

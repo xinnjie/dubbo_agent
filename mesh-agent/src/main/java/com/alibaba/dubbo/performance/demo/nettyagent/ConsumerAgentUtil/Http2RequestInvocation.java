@@ -22,29 +22,33 @@ public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         FullHttpRequest req = (FullHttpRequest) msg;
-        if (req.method().equals(HttpMethod.POST)) {
-            HttpPostRequestDecoder postDecoder = new HttpPostRequestDecoder(req);
-            List<InterfaceHttpData> paramList = postDecoder.getBodyHttpDatas();
-            Map<String, String> paramMap = new HashMap<>();
-            for (InterfaceHttpData para : paramList) {
-                Attribute data = (Attribute) para;
-                paramMap.put(data.getName(), data.getValue());
-            }
-            final Invocation invocation = new Invocation();
+        try {
+            if (req.method().equals(HttpMethod.POST)) {
+                HttpPostRequestDecoder postDecoder = new HttpPostRequestDecoder(req);
+                List<InterfaceHttpData> paramList = postDecoder.getBodyHttpDatas();
+                Map<String, String> paramMap = new HashMap<>();
+                for (InterfaceHttpData para : paramList) {
+                    Attribute data = (Attribute) para;
+                    paramMap.put(data.getName(), data.getValue());
+                }
+                final Invocation invocation = new Invocation();
 
             /*
             TODO 解读http，构建对应 invocation 的重要部分，多检查一下
              */
-            invocation.setMethodName(paramMap.get("method"));
-            invocation.setParameterTypes(paramMap.get("parameterTypesString"));
-            invocation.setArguments(paramMap.get("parameter"));
-            invocation.setInterfaceName(paramMap.get("interface"));
-            //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
+                invocation.setMethodName(paramMap.get("method"));
+                invocation.setParameterTypes(paramMap.get("parameterTypesString"));
+                invocation.setArguments(paramMap.get("parameter"));
+                invocation.setInterfaceName(paramMap.get("interface"));
+                //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
 //                invocation.setAttachment("path", paramMap.get("interface"));
-            logger.info("received from Consumer");
-            ctx.fireChannelRead(invocation);
-        } else {
-            logger.warn("CA received non-post request from consumer");
+                logger.info("received from Consumer");
+                ctx.fireChannelRead(invocation);
+            } else {
+                logger.warn("CA received non-post request from consumer");
+            }
+        } finally {
+             req.release();
         }
     }
 

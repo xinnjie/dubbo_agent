@@ -17,6 +17,7 @@ public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Invocation invocation = (Invocation) msg;
+        // todo 这里用了 unpooled 的 heap buffer
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
                 Unpooled.wrappedBuffer(invocation.getResult().getBytes()));
         response.headers().set(CONTENT_TYPE, "text/plain");
