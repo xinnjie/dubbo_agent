@@ -18,6 +18,11 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
     }
 
     @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
+    }
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Invocation invocation = (Invocation) msg;
 
@@ -46,6 +51,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
                 }
             });
         }
+
 
     }
 }
