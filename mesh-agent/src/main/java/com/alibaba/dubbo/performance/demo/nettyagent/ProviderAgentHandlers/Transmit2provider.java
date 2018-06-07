@@ -15,7 +15,6 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
 
     ChannelFuture providerChannelFuture;
 
-    AtomicInteger count = new AtomicInteger(0);
     public Transmit2provider(ChannelFuture providerChannelFuture) {
         this.providerChannelFuture = providerChannelFuture;
     }
@@ -31,12 +30,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
 
 //                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
                 // 将收到的 request 发给 provider
-                logger.info("从 PA 传向 provider count: {}", count.get());
-                if (count.getAndIncrement() % 10 != 0) {
-                    providerChannel.write(invocation);
-                } else {
                     providerChannel.writeAndFlush(invocation);
-                }
 
             } else {
                 logger.error("connection to provider down! 并且还没有被恢复");
@@ -50,12 +44,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
                     if (future.isSuccess()) {
                         logger.info("connection to provider established，and listener is called");
                         Channel providerChannel = future.channel();
-                        logger.info("从 PA 传向 provider count: {}", count.get());
-                        if (count.getAndIncrement() % 10 != 0) {
-                            providerChannel.write(invocation);
-                        } else {
-                            providerChannel.writeAndFlush(invocation);
-                        }
+                        providerChannel.writeAndFlush(invocation);
                     } else {
                         logger.error("connection to provider failed error message: " + future.cause().getMessage());
                     }

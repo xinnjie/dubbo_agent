@@ -68,17 +68,11 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
-                                 AtomicInteger count = new AtomicInteger(0);
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
 //                                     if (PALeftChannel.isActive()) {
-                                     logger.info("从 PA 传向 CA count: {}", count.get());
-                                     if (count.getAndIncrement() % 10 != 0) {
-                                         PALeftChannel.write(invocation);
-                                     } else {
                                          PALeftChannel.writeAndFlush(invocation);
-                                     }
 //                                     } else {
 //                                         logger.error("connection between CA and PA is broken");
 //                                     }

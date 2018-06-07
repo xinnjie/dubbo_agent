@@ -48,7 +48,6 @@ public class NettyConsumerAgent {
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             waitProviderAgent();
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
-            AtomicInteger sendCount = new AtomicInteger();
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -61,7 +60,7 @@ public class NettyConsumerAgent {
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
-                        .childHandler(new CAInitializer(connectManager, sendCount));
+                        .childHandler(new CAInitializer(connectManager));
 
                 Channel ch = b.bind().sync().channel();
                 ch.closeFuture().sync();

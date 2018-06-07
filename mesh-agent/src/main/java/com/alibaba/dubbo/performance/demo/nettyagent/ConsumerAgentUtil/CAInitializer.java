@@ -19,10 +19,8 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
     private Logger logger = LoggerFactory.getLogger(CAInitializer.class);
 
 
-    final AtomicInteger sendCount;
-    public CAInitializer(ConnectManager manager,  AtomicInteger sendCount) {
+    public CAInitializer(ConnectManager manager) {
         this.connectManager = manager;
-        this.sendCount = sendCount;
     }
 
     /*
@@ -47,7 +45,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
          */
         p.addLast("http2invocation", new Http2RequestInvocation());
         // Transmit2PA 必须把 invocation 的 requestID 传给 connectManager
-        p.addLast("transmit2PA", new Transmit2PA(connectManager, this.sendCount));
+        p.addLast("transmit2PA", new Transmit2PA(connectManager));
 
         /*
            当写入 Invocation 到 Consumer 时，
