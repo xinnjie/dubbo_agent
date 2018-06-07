@@ -4,6 +4,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.*;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -26,6 +27,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
 
     /*
+    PA 作为服务器的 pipeline （左边）
     PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
     从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
      */
@@ -40,48 +42,19 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
-        p.addLast("transmit2provider", new ChannelInboundHandlerAdapter() {
-            ChannelFuture providerChannelFuture = providerFuture;
-
-            @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                Invocation invocation = (Invocation) msg;
-
-                if (providerChannelFuture.isSuccess()) {
-                    Channel providerChannel = providerChannelFuture.channel();
-                    if (providerChannel.isActive()) {
-//                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
-                        // 将收到的 request 发给 provider
-                        providerChannel.writeAndFlush(invocation);
-                    } else {
-                        logger.error("connection to provider down! 并且还没有被恢复");
-                    }
-                }
-                else {
-                    logger.info("connection to provider is not established yet, add a listener");
-                    providerChannelFuture.addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                logger.info("connection to provider established，and listener is called");
-                                Channel providerChannel = future.channel();
-                                providerChannel.writeAndFlush(invocation);
-                            } else {
-                                logger.error("connection to provider failed error message: " + future.cause().getMessage());
-                            }
-                        }
-                    });
-                }
-
-            }
-        });
+        p.addLast("transmit2provider", new Transmit2provider(providerFuture));
 
     }
+    /*
+    PA 作为客户端向 Dubbo 请求的 pipeline 设置（右边）
+     */
     public ChannelFuture bootstrapConnectToProvider(SocketChannel leftChannel) {
         Bootstrap bootstrap = new Bootstrap()
                 .group(leftChannel.eventLoop())
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
 //                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -98,14 +71,19 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
                                      if (PALeftChannel.isActive()) {
-                                        PALeftChannel.writeAndFlush(invocation);
+                                        PALeftChannel.write(invocation);
                                      } else {
                                          logger.error("connection between CA and PA is broken");
                                      }
                                  }
                              });
                          }
-                     }
+
+                             @Override
+                             public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+                                 ctx.flush();
+                             }
+                         }
                 );
         int port = Integer.valueOf(System.getProperty("dubbo.protocol.port"));
 

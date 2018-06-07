@@ -7,7 +7,9 @@ import com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers.PAIni
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.EtcdRegistry;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.IRegistry;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -44,8 +46,11 @@ public class NettyProviderAgent {
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
-//                        .option(ChannelOption.SO_KEEPALIVE, true)
-//                        .option(ChannelOption.TCP_NODELAY, true)
+                        .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                        .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                        .childOption(ChannelOption.SO_KEEPALIVE, true)
+                        .childOption(ChannelOption.TCP_NODELAY, true)
+                        .childOption(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))

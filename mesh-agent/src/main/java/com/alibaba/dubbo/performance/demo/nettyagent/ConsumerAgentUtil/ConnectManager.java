@@ -6,6 +6,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -29,7 +30,11 @@ public class ConnectManager {
     private final List<Endpoint> endpoints;
     private HashMap<Endpoint, List<Channel>> endpoint2Channel = new HashMap<>();
     private List<Channel> PAChannels = new ArrayList<>();
-    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
+//    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
+    // TODO  request2CAChannel 可以进行优化
+    // 使用桶装的容器，桶内设n 个板子，对 requestID 进行分流，减少修改时的阻塞
+    final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
+
 
     /*
     语义上讲这两份 cache 是属于 CA 的
@@ -78,6 +83,12 @@ public class ConnectManager {
      * 一次性创建所有到 PA 的连接, 总个数和权重和决定
      * CA 右侧的连接们
      * 负责收到 PA 的回应后，编码为 invocation后发回给 consumer
+     *
+     *
+     *
+     *
+     * option:
+     * ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK 和 channelWritabilityChanged() 配合进行对发送数据的聚集，而不是每次收到一条 invocation 就发送，减少 socket send 的调用次数
      */
     private void initConnectToPA() {
         HashMap<Endpoint, List<ChannelFuture>> PAChannelFutures = new HashMap<>();
@@ -91,6 +102,8 @@ public class ConnectManager {
                     .group(this.eventLoopGroup)
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.TCP_NODELAY, true)
+                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                    .option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
@@ -112,10 +125,15 @@ public class ConnectManager {
                                     if (consumerChannel != null) {
                                         logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
-                                        consumerChannel.writeAndFlush(invocation);
+                                        consumerChannel.write(invocation);
                                     } else {
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());
                                     }
+                                }
+
+                                @Override
+                                public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+                                    ctx.flush();
                                 }
                             });
                         }
