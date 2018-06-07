@@ -198,6 +198,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 // todo 现在假设只有一个参数，以后改进
                 String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 invocation.setArguments(body.trim());
+                logger.info("current methods is cached");
+
             }
             /*
             假如没有 cache 过，将现在这个 method 进行 cache
