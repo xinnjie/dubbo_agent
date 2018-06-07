@@ -152,7 +152,7 @@ public class Invocation extends FuncType{
 //                ", arguments='" + arguments + '\'' +
 //                ", result='" + result + '\'' +
                 ", requestID=" + requestID +
-                ", methodID=" + methodID +
+//                ", methodID=" + methodID +
                 '}';
     }
 }

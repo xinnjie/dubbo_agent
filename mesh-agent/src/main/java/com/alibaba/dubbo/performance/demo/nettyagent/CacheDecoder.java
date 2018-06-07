@@ -222,11 +222,13 @@ public class CacheDecoder extends ByteToMessageDecoder{
 
 
                 // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
-                int newMethodID = Invocation.getUniqueMethodID();
-                invocation.setMethodID(newMethodID);
-                this.methods.put(newMethodID, invocation.shallowCopy());
-                this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
-                logger.info("new functype insert into cache: {}", invocation);
+                if (!this.methods.contains(invocation)) {
+                    int newMethodID = Invocation.getUniqueMethodID();
+                    invocation.setMethodID(newMethodID);
+                    this.methods.put(newMethodID, invocation.shallowCopy());
+                    this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
+                    logger.info("new functype insert into cache: {}", invocation);
+                }
             }
             logger.info("received from CA: " + invocation.toString());
             return invocation;
