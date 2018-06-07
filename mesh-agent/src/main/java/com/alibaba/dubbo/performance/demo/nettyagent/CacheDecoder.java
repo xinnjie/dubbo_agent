@@ -220,7 +220,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 // TODO 最好在添加缓存时先查看一下缓存中是否含有这个方法的缓存，这里先不做是因为只缓存了 methodID -> funcType 的缓存，如果要找就需要遍历一次 hashMap
                 //                if (!this.methods.containsKey(invocation))
 
-
+                logger.info("current methods size: {}, first request size: {}", methods.size(), requestToMethodFirstCache.size());
                 // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
                 if (!this.methods.contains(invocation)) {
                     int newMethodID = Invocation.getUniqueMethodID();

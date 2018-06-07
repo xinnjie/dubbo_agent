@@ -110,6 +110,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
 
             }
+            logger.info("current methodsID size: {}", methodIDs.size());
             logger.info("sending request to PA: " + invocation.toString());
             out.writeCharSequence(invocation.getArguments() + "\n", Charset.forName("utf-8"));
             int totalIndex = out.writerIndex();
