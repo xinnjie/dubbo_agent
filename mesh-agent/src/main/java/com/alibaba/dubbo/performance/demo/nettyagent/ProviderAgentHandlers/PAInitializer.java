@@ -55,6 +55,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .option(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
+                .option(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 600)
+
 //                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {

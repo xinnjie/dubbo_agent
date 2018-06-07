@@ -51,6 +51,7 @@ public class NettyProviderAgent {
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
                         .childOption(ChannelOption.TCP_NODELAY, true)
                         .childOption(ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK, 1200)
+                        .childOption(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, 600)
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
