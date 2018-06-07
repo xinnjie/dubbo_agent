@@ -24,4 +24,5 @@ public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
         ctx.write(response);
     }
+
 }

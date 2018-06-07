@@ -80,7 +80,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  }
                              });
                          }
-
                              @Override
                              public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
                                  ctx.flush();

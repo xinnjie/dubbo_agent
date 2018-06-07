@@ -48,9 +48,4 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
         }
 
     }
-
-    @Override
-    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        ctx.flush();
-    }
 }

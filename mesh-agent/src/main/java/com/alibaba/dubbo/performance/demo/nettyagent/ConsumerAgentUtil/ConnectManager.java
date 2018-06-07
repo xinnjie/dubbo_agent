@@ -126,12 +126,11 @@ public class ConnectManager {
                                     if (consumerChannel != null) {
                                         logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
-                                        consumerChannel.write(invocation);
+                                        consumerChannel.writeAndFlush(invocation);
                                     } else {
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());
                                     }
                                 }
-
                                 @Override
                                 public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
                                     ctx.flush();
