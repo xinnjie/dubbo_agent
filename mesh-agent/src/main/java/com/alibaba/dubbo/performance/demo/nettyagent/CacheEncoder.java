@@ -156,6 +156,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         Bytes.long2bytes(invocation.getRequestID(), header, REQEUST_ID_INDEX);
         if (isCache) {
             header[2] |= FLAG_CACHE;
+            Bytes.int2bytes(invocation.getMethodID(), header, METHOD_ID_INDEX);
         }
         out.writerIndex(startWriteIndex + HeaderLength);
         if (isValid) {
