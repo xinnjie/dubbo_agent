@@ -136,6 +136,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         if (this.requestToMethodFirstCache.containsKey(requestID)) {
             isValid = true;
             int cachedMethodID = this.requestToMethodFirstCache.get(requestID);
+            invocation.setMethodID(cachedMethodID);
             this.requestToMethodFirstCache.remove(requestID);
 
             // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
