@@ -30,7 +30,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
 
 //                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
                 // 将收到的 request 发给 provider
-                    providerChannel.write(invocation);
+                    providerChannel.writeAndFlush(invocation);
 
             } else {
                 logger.error("connection to provider down! 并且还没有被恢复");
@@ -44,7 +44,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
                     if (future.isSuccess()) {
                         logger.info("connection to provider established，and listener is called");
                         Channel providerChannel = future.channel();
-                        providerChannel.write(invocation);
+                        providerChannel.writeAndFlush(invocation);
                     } else {
                         logger.error("connection to provider failed error message: " + future.cause().getMessage());
                     }

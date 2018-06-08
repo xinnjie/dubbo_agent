@@ -33,7 +33,7 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
         requestInvocation.setRequestID(requestID);
         Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
 //        logger.info("sending to Channel " + providerChannel.toString());
-        providerChannel.write(requestInvocation);
+        providerChannel.writeAndFlush(requestInvocation);
     }
 
 

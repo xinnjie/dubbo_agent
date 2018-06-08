@@ -76,7 +76,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      Invocation invocation = (Invocation) msg;
 //                                     if (PALeftChannel.isActive()) {
-                                         PALeftChannel.write(invocation);
+                                         PALeftChannel.writeAndFlush(invocation);
 //                                     } else {
 //                                         logger.error("connection between CA and PA is broken");
 //                                     }
