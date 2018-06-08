@@ -194,11 +194,11 @@ public class CacheDecoder extends ByteToMessageDecoder{
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
                 // 从缓存中取出有关方法信息：methodName, interfaceName, parameterTypes
+                logger.info("current methods is cached, methodID is {}", invocation.getMethodID());
                 cacheContext.get(invocation.getMethodID()).shallowCopyInPlace(invocation);
                 // todo 现在假设只有一个参数，以后改进
                 String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 invocation.setArguments(body.trim());
-                logger.info("current methods is cached");
 
             }
             /*
