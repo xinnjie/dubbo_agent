@@ -4,6 +4,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -26,10 +27,10 @@ public class CacheDecoderTest {
         String rightBytesStr = "dacc600000000000000000250000002e000000006e756c6c0a6e756c6c0a6e756c6c0a313231353630313731360adacc4000000000000000002d0000001e000000003739353630383437370a";
         byte[] rightResponse = ByteBufUtil.decodeHexDump(rightBytesStr);
 
-        ConcurrentHashMap<Integer, FuncType> methodIDsCache = new ConcurrentHashMap<>();
+        CacheContext cacheContext = new CacheContext();
 
         EmbeddedChannel CADecodeChannel = new EmbeddedChannel(
-                new CacheDecoder(methodIDsCache, null)
+                new CacheDecoder(cacheContext, null)
         );
 
         assertFalse(CADecodeChannel.writeInbound(Unpooled.wrappedBuffer(errResponse)));

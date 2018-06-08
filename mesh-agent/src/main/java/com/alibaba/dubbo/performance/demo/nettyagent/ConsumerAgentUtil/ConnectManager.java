@@ -5,6 +5,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
@@ -39,7 +40,7 @@ public class ConnectManager {
     /*
     语义上讲这两份 cache 是属于 CA 的
      */
-    private HashMap<Endpoint, ConcurrentHashMap<FuncType, Integer>> endpointMethodsIDs = null;
+    private HashMap<Endpoint, CacheContext> cacheContexts = null;
     private HashMap<Endpoint, ConcurrentHashMap<Integer, FuncType>> endpointMethods = null;
 
     public ConnectManager(EventLoopGroup eventLoopGroup, List<Endpoint> endpoints) {
@@ -68,14 +69,9 @@ public class ConnectManager {
         }
         weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
 
-        endpointMethodsIDs = new HashMap<>();
+        cacheContexts = new HashMap<>();
         for (Endpoint endpoint : endpoints) {
-            endpointMethodsIDs.put(endpoint, new ConcurrentHashMap<>());
-        }
-
-        endpointMethods = new HashMap<>();
-        for (Endpoint endpoint : endpoints) {
-            endpointMethods.put(endpoint, new ConcurrentHashMap<>());
+            cacheContexts.put(endpoint, new CacheContext());
         }
     }
 
@@ -113,8 +109,8 @@ public class ConnectManager {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
                             // 由于只有在 response 端会用 FirstTime Cache 这里传入了 null，表示不需要
-                            pipeline.addLast("CacheEncoder", new CacheEncoder(endpointMethodsIDs.get(endpoint), null));
-                            pipeline.addLast("CacheDecoder", new CacheDecoder(endpointMethods.get(endpoint), null));
+                            pipeline.addLast("CacheEncoder", new CacheEncoder(cacheContexts.get(endpoint), null));
+                            pipeline.addLast("CacheDecoder", new CacheDecoder(cacheContexts.get(endpoint), null));
                             // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
                             pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
                                 /*

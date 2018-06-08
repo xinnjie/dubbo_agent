@@ -1,6 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -18,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CacheEncoder extends MessageToByteEncoder{
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
-    private final ConcurrentHashMap<FuncType, Integer> methodIDs;
+    private final CacheContext cacheContext;
+
 
     //    public static final String NAME = "cache";
     private Logger logger = LoggerFactory.getLogger(CacheEncoder.class);
@@ -54,15 +56,15 @@ public class CacheEncoder extends MessageToByteEncoder{
 
     /**
      *
-     * @param methodIDsCache
+     * @param cacheContext
      * @param requestToMethodFirstCache  **只在 encode response 时会被用到**   需要对应的encoder decoder 共享使用
      *                                  这个 map 将一个 requestID 映射到 methodID.
      *                                  当encode 的 response 的方法信息第一次被缓存时，response encoder 可以通过 requestID 得到对应的被缓存的 methodID
      *                                  并将这个 methodID 发给 CA，告诉它这个方法被缓存了。
      */
-    public CacheEncoder(ConcurrentHashMap<FuncType, Integer> methodIDsCache, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
+    public CacheEncoder(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
         super();
-        this.methodIDs = methodIDsCache;
+        this.cacheContext = cacheContext;
         this.requestToMethodFirstCache = requestToMethodFirstCache;
 
     }
@@ -70,7 +72,6 @@ public class CacheEncoder extends MessageToByteEncoder{
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
-        assert  this.methodIDs != null;
         Invocation invocation = (Invocation)msg;
 
         int startWriteIndex = out.writerIndex();
@@ -83,7 +84,7 @@ public class CacheEncoder extends MessageToByteEncoder{
          这部分代码负责收到 request 的 encode 逻辑
           ******************************************************/
         if (isRequest) {
-            if (methodIDs.containsKey(invocation)) {
+            if (cacheContext.contains(invocation)) {
                 isCache = true;
             }
             HeaderLength = isCache ? HEADER_LENGTH_MAX : HEADER_LENGTH_MIN;
@@ -98,8 +99,9 @@ public class CacheEncoder extends MessageToByteEncoder{
             Bytes.long2bytes(invocation.getRequestID(), header, 4);
 
             if (isCache) {
+                logger.info("the method of this request is cached");
                 header[2] |= FLAG_CACHE;
-                int methodID = methodIDs.get(invocation);
+                int methodID = cacheContext.get(invocation);
                 Bytes.int2bytes(methodID, header, METHOD_ID_INDEX);
             } else {
                 // 写入 body, 先更改 bytebuf 的 index
@@ -110,7 +112,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
 
             }
-            logger.info("current methodsID size: {}", methodIDs.size());
+            logger.info("current methodsID size: {}", cacheContext.size());
             logger.info("sending request to PA: " + invocation.toString());
             out.writeCharSequence(invocation.getArguments() + "\n", Charset.forName("utf-8"));
             int totalIndex = out.writerIndex();
@@ -137,13 +139,7 @@ public class CacheEncoder extends MessageToByteEncoder{
             this.requestToMethodFirstCache.remove(requestID);
 
             // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
-            // todo 这里用了遍历查找methodID 对应的方法
-            for (Map.Entry<FuncType, Integer> entry : this.methodIDs.entrySet()) {
-                if (entry.getValue().equals(cachedMethodID)) {
-                    entry.getKey().shallowCopyInPlace(invocation);
-                    break;
-                }
-            }
+            cacheContext.get(cachedMethodID).shallowCopyInPlace(invocation);
             logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;

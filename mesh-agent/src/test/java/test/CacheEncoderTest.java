@@ -3,6 +3,7 @@ package test;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -16,6 +17,9 @@ import static org.junit.Assert.*;
  * Created by gexinjie on 2018/6/6.
  */
 public class CacheEncoderTest {
+    /*
+    模拟 encode Cache 过的 response 过程
+     */
     @Test
     public void encode() throws Exception {
         Invocation invocation = new Invocation();
@@ -28,12 +32,14 @@ public class CacheEncoderTest {
         invocation.setResult("hello");
 
 
-        ConcurrentHashMap<FuncType, Integer> methodsCache = new ConcurrentHashMap<>();
+        CacheContext cacheContext = new CacheContext();
+        cacheContext.put(invocation.shallowCopy(), invocation.getMethodID());
+
         ConcurrentHashMap<Long, Integer> requestToMethodFirstCache = new ConcurrentHashMap<>();
-        requestToMethodFirstCache.put(invocation.getRequestID(), 0);
+        requestToMethodFirstCache.put(invocation.getRequestID(), invocation.getMethodID());
 
         EmbeddedChannel PAEncodeChannel = new EmbeddedChannel(
-                new CacheEncoder(methodsCache, requestToMethodFirstCache)
+                new CacheEncoder(cacheContext, requestToMethodFirstCache)
         );
 
         assertTrue(PAEncodeChannel.writeOutbound(invocation));

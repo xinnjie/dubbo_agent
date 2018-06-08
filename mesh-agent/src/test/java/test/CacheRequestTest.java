@@ -4,6 +4,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -25,14 +26,16 @@ import static org.junit.Assert.*;
 public class CacheRequestTest {
     @Test
     public void testCacheRequest() throws Exception {
-        ConcurrentHashMap<FuncType, Integer> methodsCache = new ConcurrentHashMap<>();
-        ConcurrentHashMap<Integer, FuncType> methodIDsCache = new ConcurrentHashMap<>();
+        CacheContext cacheContextPA = new CacheContext();
+        CacheContext cacheContextCA = new CacheContext();
+
+
         EmbeddedChannel PADecodeChannel = new EmbeddedChannel(
-                new CacheDecoder(methodIDsCache, new ConcurrentHashMap<>())
+                new CacheDecoder(cacheContextPA, new ConcurrentHashMap<>())
         );
 
         EmbeddedChannel CAEncodeChannel = new EmbeddedChannel(
-                new CacheEncoder(methodsCache, null)
+                new CacheEncoder(cacheContextCA, null)
         );
 //        ByteBuf buf = Unpooled.buffer();
         Invocation invocation = new Invocation();

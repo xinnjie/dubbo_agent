@@ -6,6 +6,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -55,20 +56,20 @@ public class CacheResponseTest {
         /*
         构建出一个给 PA response encoder 用的缓存，这个缓存原本应该在 decode request 时被构建
          */
-        ConcurrentHashMap<FuncType, Integer> methodsCache = new ConcurrentHashMap<>();
-        methodsCache.put(invocation.shallowCopy(), invocation.getMethodID());
+        CacheContext cacheContextPA = new CacheContext();
+        CacheContext cacheContextCA = new CacheContext();
+        cacheContextCA.put(invocation.shallowCopy(), invocation.getMethodID());
         ConcurrentHashMap<Long, Integer> requestToMethodFirstCache = new ConcurrentHashMap<>();
         requestToMethodFirstCache.put(invocation.getRequestID(), invocation.getMethodID());
 
 
-        ConcurrentHashMap<Integer, FuncType> methodIDsCache = new ConcurrentHashMap<>();
-        methodIDsCache.put(invocation.getMethodID(), invocation.shallowCopy());
+        cacheContextPA.put(invocation.getMethodID(), invocation.shallowCopy());
 
         EmbeddedChannel CADecodeChannel = new EmbeddedChannel(
-                new CacheDecoder(methodIDsCache, null)
+                new CacheDecoder(cacheContextCA, null)
         );
         EmbeddedChannel PAEncodeChannel = new EmbeddedChannel(
-                new CacheEncoder(methodsCache, requestToMethodFirstCache)
+                new CacheEncoder(cacheContextPA, requestToMethodFirstCache)
         );
 
         /*
