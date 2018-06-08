@@ -229,7 +229,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     invocation.setMethodID(newMethodID);
                     this.cacheContext.put(newMethodID, invocation.shallowCopy());
                     this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
-                    logger.info("new functype insert into cache: {}", invocation);
+                    logger.info("new functype insert into cache: {}", invocation.getMethodName());
                 }
             }
             logger.info("received from CA: " + invocation.toString());
