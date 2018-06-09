@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 public class EtcdRegistry implements IRegistry {
@@ -25,7 +27,7 @@ public class EtcdRegistry implements IRegistry {
     private KV kv;
     private long leaseId;
 
-    public EtcdRegistry(String registryAddress) {
+    public EtcdRegistry(String registryAddress, int maxConnectionNum) {
         Client client = Client.builder().endpoints(registryAddress).build();
         this.lease   = client.getLeaseClient();
         this.kv      = client.getKVClient();
@@ -42,7 +44,7 @@ public class EtcdRegistry implements IRegistry {
             // 如果是provider，去etcd注册服务
             try {
                 int port = Integer.valueOf(System.getProperty("server.port"));
-                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port);
+                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port, maxConnectionNum);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -50,11 +52,12 @@ public class EtcdRegistry implements IRegistry {
     }
 
     // 向ETCD中注册服务
-    public void register(String serviceName,int port) throws Exception {
+    public void register(String serviceName,int port, int maxConnectionNum) throws Exception {
         // 服务注册的key为:    /dubbomesh/com.some.package.IHelloService/192.168.100.100:2000
+        // /dubbomesh/com.alibaba.dubbo.performance.demo.provider.IHelloService/10.10.10.3:30000
         String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}",rootPath,serviceName,IpHelper.getHostIp(),String.valueOf(port));
         ByteSequence key = ByteSequence.fromString(strKey);
-        ByteSequence val = ByteSequence.fromString("");     // 目前只需要创建这个key,对应的value暂不使用,先留空
+        ByteSequence val = ByteSequence.fromString(String.valueOf(maxConnectionNum));     // 目前只需要创建这个key,对应的value暂不使用,先留空
         kv.put(key,val, PutOption.newBuilder().withLeaseId(leaseId).build()).get();
         logger.info("Register a new service at:" + strKey);
     }
@@ -72,23 +75,24 @@ public class EtcdRegistry implements IRegistry {
         );
     }
 
-    public List<Endpoint> find(String serviceName) throws Exception {
+    public Map<Endpoint, Integer> find(String serviceName) throws Exception {
 
         String strKey = MessageFormat.format("/{0}/{1}",rootPath,serviceName);
         ByteSequence key  = ByteSequence.fromString(strKey);
         GetResponse response = kv.get(key, GetOption.newBuilder().withPrefix(key).build()).get();
 
-        List<Endpoint> endpoints = new ArrayList<>();
+        Map<Endpoint, Integer> endpoints = new HashMap<>();
 
         for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()){
-            String s = kv.getKey().toStringUtf8();
-            int index = s.lastIndexOf("/");
-            String endpointStr = s.substring(index + 1,s.length());
+            String serviceAndAddress = kv.getKey().toStringUtf8();
+
+            int index = serviceAndAddress.lastIndexOf("/");
+            String endpointStr = serviceAndAddress.substring(index + 1,serviceAndAddress.length());
 
             String host = endpointStr.split(":")[0];
             int port = Integer.valueOf(endpointStr.split(":")[1]);
-
-            endpoints.add(new Endpoint(host,port));
+            String maxConnections = kv.getValue().toStringUtf8();
+            endpoints.put(new Endpoint(host,port), Integer.valueOf(maxConnections));
         }
         return endpoints;
     }

@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,14 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class NettyConsumerAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
-    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"));
+    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), 0);
 
     private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
-    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
-            new Endpoint("provider-large",30000),
-            new Endpoint("provider-medium",30000),
-            new Endpoint("provider-small",30000)));
-
+    Map<Endpoint, Integer> endpoints;
+//    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
+//            new Endpoint("provider-large",30000),
+//            new Endpoint("provider-medium",30000),
+//            new Endpoint("provider-small",30000)));
 
     public static void main(String[] args) throws Exception{
         new NettyConsumerAgent().run();
@@ -47,6 +48,8 @@ public class NettyConsumerAgent {
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             waitProviderAgent();
+            endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
             try {
                 ServerBootstrap b = new ServerBootstrap();
@@ -77,8 +80,8 @@ public class NettyConsumerAgent {
     private void waitProviderAgent() {
         boolean scanning=true;
 
-        for (Endpoint endpoint :
-                endpoints) {
+        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+            Endpoint endpoint = entry.getKey();
             while (scanning) {
                 Socket sock = new Socket();
                 try {

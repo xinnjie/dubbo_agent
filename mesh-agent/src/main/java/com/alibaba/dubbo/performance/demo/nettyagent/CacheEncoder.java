@@ -101,12 +101,14 @@ public class CacheEncoder extends MessageToByteEncoder{
             if (isCache) {
                 logger.info("the method of this request is cached");
                 header[2] |= FLAG_CACHE;
-                int methodID = cacheContext.get(invocation);
+                Integer methodID = cacheContext.get(invocation);
+                if (methodID == null) {
+                    logger.error("request is not cached {}, cuurent cache table is {}", invocation, cacheContext.getMethodIDs());
+                }
                 Bytes.int2bytes(methodID, header, METHOD_ID_INDEX);
             } else {
                 // 写入 body, 先更改 bytebuf 的 index
                 out.writerIndex(startWriteIndex + HeaderLength);
-
                 out.writeCharSequence(invocation.getMethodName() + "\n", Charset.forName("utf-8"));
                 out.writeCharSequence(invocation.getParameterTypes() + "\n", Charset.forName("utf-8"));
                 out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
@@ -140,7 +142,11 @@ public class CacheEncoder extends MessageToByteEncoder{
             this.requestToMethodFirstCache.remove(requestID);
 
             // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
-            cacheContext.get(cachedMethodID).shallowCopyInPlace(invocation);
+            FuncType functype = cacheContext.get(cachedMethodID);
+            if (functype == null) {
+                logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
+            }
+            functype.shallowCopyInPlace(invocation);
             logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;

@@ -35,4 +35,13 @@ public class CacheContext {
     public int size() {
         return methods.size();
     }
+
+
+    public ConcurrentHashMap<FuncType, Integer> getMethodIDs() {
+        return methodIDs;
+    }
+
+    public ConcurrentHashMap<Integer, FuncType> getMethods() {
+        return methods;
+    }
 }
