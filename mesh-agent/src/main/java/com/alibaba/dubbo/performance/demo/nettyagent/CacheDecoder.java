@@ -110,7 +110,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.info("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -160,7 +160,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
             assert isCache;
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
-                logger.info("current response is cached : {}", invocation.getMethodID());
+                logger.debug("current response is cached : {}", invocation.getMethodID());
 
                 if (isValid) {
                     //当 Valid 有效时，说明 response 第一次缓存 method id

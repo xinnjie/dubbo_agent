@@ -120,7 +120,7 @@ public class ConnectManager {
                                     // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
                                     Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
                                     if (consumerChannel != null) {
-                                        logger.info("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
+                                        logger.debug("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
                                         // 这里不要等待，只有发回回应，Consumer 才会继续发请求
                                         consumerChannel.writeAndFlush(invocation);

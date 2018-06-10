@@ -5,6 +5,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.JsonUtils;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
@@ -30,7 +31,6 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         Invocation invocation = (Invocation) msg;
-        logger.info("sending request to provider: " + invocation.toString());
 
         // header.
         byte[] header = new byte[HEADER_LENGTH];
@@ -64,6 +64,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         buffer.writerIndex(savedWriteIndex);
         buffer.writeBytes(header); // write header.
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
+        logger.debug("sending request to provider: {}, hexdump: {}",  invocation.toString(), ByteBufUtil.hexDump(buffer));
     }
 
     public void encodeRequestData(OutputStream out, Invocation inv) throws Exception {

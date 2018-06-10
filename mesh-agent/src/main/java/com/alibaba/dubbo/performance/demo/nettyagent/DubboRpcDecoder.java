@@ -81,7 +81,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             return DecodeResult.NEED_MORE_INPUT;
         }
         byteBuf.readerIndex(savedReaderIndex);
-//        logger.info("hexdumping dubbo response: " + ByteBufUtil.hexDump(byteBuf));
+        logger.debug("hexdumping dubbo response: {} ",  ByteBufUtil.hexDump(byteBuf));
         byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 
@@ -120,7 +120,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         invocation.setRequestID(requestId);
         invocation.setResult(new String(subArray));
 
-        logger.info("PA received response from provider: " + invocation.toString());
+        logger.debug("PA received response from provider: {}:", invocation);
         if (status == 20) {
             return invocation;
         }

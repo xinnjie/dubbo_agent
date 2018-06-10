@@ -37,7 +37,7 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
             }
         }
         else {
-            logger.info("connection to provider is not established yet, add a listener");
+            logger.debug("connection to provider is not established yet, add a listener");
             providerChannelFuture.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
