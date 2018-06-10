@@ -3,6 +3,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
@@ -69,6 +70,15 @@ public class CacheEncoder extends MessageToByteEncoder{
 
     }
 
+//    private  void checkValidRequestEncode(int startIndex, ByteBuf buf) {
+//        int endIndex = buf.readerIndex();
+//        buf.readerIndex(startIndex);
+//        ByteBuf slice = buf.slice();
+//        buf.readerIndex(endIndex);
+//
+//
+//
+//    }
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
@@ -96,30 +106,33 @@ public class CacheEncoder extends MessageToByteEncoder{
             // request 放需要分配一个 reqeustID 给每次 encode
             // 启动方面只要使用这个 ID，不能再分配
             assert invocation.getRequestID() != -1;
-            Bytes.long2bytes(invocation.getRequestID(), header, 4);
+            Bytes.long2bytes(invocation.getRequestID(), header, REQEUST_ID_INDEX);
 
+            out.writerIndex(startWriteIndex + HeaderLength);
             if (isCache) {
-                logger.info("the method of this request is cached");
                 header[2] |= FLAG_CACHE;
-                int methodID = cacheContext.get(invocation);
+                Integer methodID = cacheContext.get(invocation);
+                if (methodID == null) {
+                    logger.error("request is not cached {}, cuurent cache table is {}", invocation, cacheContext.getMethodIDs());
+                } else {
+                    logger.info("the method of this request is cached");
+                }
                 Bytes.int2bytes(methodID, header, METHOD_ID_INDEX);
             } else {
                 // 写入 body, 先更改 bytebuf 的 index
-                out.writerIndex(startWriteIndex + HeaderLength);
-
                 out.writeCharSequence(invocation.getMethodName() + "\n", Charset.forName("utf-8"));
                 out.writeCharSequence(invocation.getParameterTypes() + "\n", Charset.forName("utf-8"));
                 out.writeCharSequence(invocation.getInterfaceName() + "\n", Charset.forName("utf-8"));
 
             }
-            logger.info("current methodsID size: {}", cacheContext.size());
-            logger.info("sending request to PA: " + invocation.toString());
             out.writeCharSequence(invocation.getArguments() + "\n", Charset.forName("utf-8"));
             int totalIndex = out.writerIndex();
             Bytes.int2bytes(totalIndex-startWriteIndex, header, DATA_LENGTH_INDEX);
             out.writerIndex(startWriteIndex);
             out.writeBytes(header);
             out.writerIndex(totalIndex);
+            logger.info("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+
             return;
         }
         /* ************ response encode ************************
@@ -140,7 +153,11 @@ public class CacheEncoder extends MessageToByteEncoder{
             this.requestToMethodFirstCache.remove(requestID);
 
             // 从 dubbo 的 request ID 找到对应的 methodID，用 methodID 找到对应的 funcType 信息
-            cacheContext.get(cachedMethodID).shallowCopyInPlace(invocation);
+            FuncType functype = cacheContext.get(cachedMethodID);
+            if (functype == null) {
+                logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
+            }
+            functype.shallowCopyInPlace(invocation);
             logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;
@@ -173,7 +190,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-        logger.info("sending response to CA: " + invocation.toString());
+        logger.info("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
 
     }
 

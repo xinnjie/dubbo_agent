@@ -5,6 +5,7 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Test;
@@ -59,4 +60,38 @@ public class CacheEncoderTest {
 
     }
 
+    /*
+    这个测试用来检查一个运行时的错误
+    Invocation{methodName='hash', parameterTypes='Ljava/lang/String;', arguments='lsx7sktGyG586Wte', result='null', requestID=335, methodID=-1},
+     被 encode request 成了：
+    hexdump: daccc000000000000000014f0000001100 , current methodsID size: 1
+    dacc c000
+    0000 0000
+    0000 014f  // reqeustID 335
+    0000 0011   // data length 17
+    00
+
+     */
+
+    @Test
+    public void test() throws Exception {
+        Invocation invocation = new Invocation();
+        invocation.setInterfaceName("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+        invocation.setParameterTypes("Ljava/lang/String;");
+        invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
+        invocation.setRequestID(335);
+        invocation.setMethodName("hash");
+        invocation.setArguments("lsx7sktGyG586Wte");
+        CacheContext cacheContext = new CacheContext();
+        cacheContext.put(invocation.shallowCopy(), 23);
+
+
+        EmbeddedChannel PAEncodeChannel = new EmbeddedChannel(
+                new CacheEncoder(cacheContext, null)
+        );
+
+        assertTrue(PAEncodeChannel.writeOutbound(invocation));
+        ByteBuf out = PAEncodeChannel.readOutbound();
+        System.out.println(ByteBufUtil.hexDump(out));
+    }
 }

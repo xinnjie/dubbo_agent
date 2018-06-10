@@ -13,10 +13,12 @@ public class CacheContext {
     public void put(FuncType type, Integer methodID) {
         methodIDs.put(type, methodID);
         methods.put(methodID, type);
+        assert methodIDs.size() == methods.size();
     }
     public void put(Integer methodID, FuncType type) {
         methodIDs.put(type, methodID);
         methods.put(methodID, type);
+        assert methodIDs.size() == methods.size();
     }
     public FuncType get(Integer methodID) {
         return methods.get(methodID);
@@ -34,5 +36,14 @@ public class CacheContext {
 
     public int size() {
         return methods.size();
+    }
+
+
+    public ConcurrentHashMap<FuncType, Integer> getMethodIDs() {
+        return methodIDs;
+    }
+
+    public ConcurrentHashMap<Integer, FuncType> getMethods() {
+        return methods;
     }
 }

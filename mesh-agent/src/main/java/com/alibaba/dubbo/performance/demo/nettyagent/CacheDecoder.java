@@ -2,6 +2,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
+import com.alibaba.dubbo.performance.demo.nettyagent.util.GetTraceString;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -66,6 +67,21 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 try {
                     msg = doDecode(byteBuf);
                     assert  msg != null;
+                } catch (IndexOutOfBoundsException e) {
+                    byteBuf.readerIndex(savedReaderIndex);
+                    boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
+                            isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
+                            isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
+                    final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
+                    logger.error("informations:\n" +
+                            "isRequest: {}\n" +
+                            "isCached: {}\n" +
+                            "isValid: {}\n" +
+                            "dataLength(协议中的域): {}\n" +
+                            "hexdump: {}\n" +
+                            "IndexOutOfBoundsException: {}", isRequest,isCached, isValid, dataLength ,
+                                                    ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+                    byteBuf.clear();
                 } catch (Exception e) {
                     throw e;
                 }
@@ -94,6 +110,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
+        logger.info("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+
 
         final int startIndex = byteBuf.readerIndex();
         int readable = byteBuf.readableBytes();
@@ -104,6 +122,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
         final short code = byteBuf.getShort(0);
         // todo 这个时候服务器应该停下
         if (code != MAGIC) {
+            logger.error("not correct code");
             return DecodeResult.DECODE_ERROR;
         }
         final boolean isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0 ;
@@ -117,8 +136,6 @@ public class CacheDecoder extends ByteToMessageDecoder{
 
         final int HeaderLength = isCache ? HEADER_LENGTH_MAX : HEADER_LENGTH_MIN;
 
-//        byte[] dataLen = Arrays.copyOfRange(header,12,16);
-//        int len = Bytes.bytes2int(dataLen);
         final int bodyLength = dataLength - HeaderLength;
         if (readable < dataLength) {
 //            byteBuf.readerIndex(startIndex);
@@ -143,6 +160,8 @@ public class CacheDecoder extends ByteToMessageDecoder{
             assert isCache;
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
+                logger.info("current response is cached : {}", invocation.getMethodID());
+
                 if (isValid) {
                     //当 Valid 有效时，说明 response 第一次缓存 method id
                     // 在 invocation 的方法属性读取完毕后放入缓存
@@ -194,9 +213,19 @@ public class CacheDecoder extends ByteToMessageDecoder{
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
                 // 从缓存中取出有关方法信息：methodName, interfaceName, parameterTypes
-                logger.info("current methods is cached, methodID is {}", invocation.getMethodID());
-                cacheContext.get(invocation.getMethodID()).shallowCopyInPlace(invocation);
+                FuncType funcType = cacheContext.get(invocation.getMethodID());
+                if (funcType == null) {
+                    logger.error("method id {} is not cached, current cacheTable is {}, body hexdump(starts after methodiD): {}", invocation.getMethodID(), cacheContext.getMethodIDs(), ByteBufUtil.hexDump(byteBuf));
+                } else {
+                    funcType.shallowCopyInPlace(invocation);
+                    logger.info("current methods is cached, methodID is {}", invocation.getMethodID());
+                }
+
+
                 // todo 现在假设只有一个参数，以后改进
+                if (byteBuf.readableBytes() < bodyLength) {
+                    logger.error("body data length is not right: {}, body hexdum(starts after methodiD) : {}", bodyLength, ByteBufUtil.hexDump(byteBuf));
+                }
                 String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
                 invocation.setArguments(body.trim());
 

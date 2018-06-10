@@ -28,10 +28,10 @@ public class ConnectManager {
     private Logger logger = LoggerFactory.getLogger(ConnectManager.class);
     private List<Endpoint> weightedEndpoints = null;
     static final Random random = new Random();
-    private final List<Endpoint> endpoints;
+    private final Map<Endpoint, Integer> endpoints;
     private HashMap<Endpoint, List<Channel>> endpoint2Channel = new HashMap<>();
     private List<Channel> PAChannels = new ArrayList<>();
-//    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
+    //    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
     // TODO  request2CAChannel 可以进行优化
     // 使用桶装的容器，桶内设n 个板子，对 requestID 进行分流，减少修改时的阻塞
     final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
@@ -43,7 +43,7 @@ public class ConnectManager {
     private HashMap<Endpoint, CacheContext> cacheContexts = null;
     private HashMap<Endpoint, ConcurrentHashMap<Integer, FuncType>> endpointMethods = null;
 
-    public ConnectManager(EventLoopGroup eventLoopGroup, List<Endpoint> endpoints) {
+    public ConnectManager(EventLoopGroup eventLoopGroup, Map<Endpoint, Integer> endpoints) {
         this.eventLoopGroup = eventLoopGroup;
         this.endpoints = endpoints;
         initVariables();
@@ -54,24 +54,22 @@ public class ConnectManager {
         /*
          初始化 endpoint2Channel
          */
-        for (Endpoint endpoint : this.endpoints) {
-            this.endpoint2Channel.put(endpoint, new ArrayList<>());
+        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+            this.endpoint2Channel.put(entry.getKey(), new ArrayList<>());
         }
 
 
-        List<Integer> weight = Arrays.asList(150, 125, 100);
-        assert endpoints.size() == weight.size();
         weightedEndpoints = new ArrayList<>();
-        for (int i = 0; i < endpoints.size(); ++i) {
-            for (int j = 0; j < weight.get(i); j++) {
-                weightedEndpoints.add(endpoints.get(i));
+        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                weightedEndpoints.add(entry.getKey());
             }
         }
         weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
 
         cacheContexts = new HashMap<>();
-        for (Endpoint endpoint : endpoints) {
-            cacheContexts.put(endpoint, new CacheContext());
+        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+            cacheContexts.put(entry.getKey(), new CacheContext());
         }
     }
 
@@ -92,9 +90,8 @@ public class ConnectManager {
      */
     private void initConnectToPA() {
         HashMap<Endpoint, List<ChannelFuture>> PAChannelFutures = new HashMap<>();
-        for (Endpoint endpoint :
-                this.endpoints) {
-            PAChannelFutures.put(endpoint, new ArrayList<>());
+        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+            PAChannelFutures.put(entry.getKey(), new ArrayList<>());
         }
         for (Endpoint endpoint : weightedEndpoints) {
             Bootstrap bootstrap = new Bootstrap();
@@ -135,7 +132,6 @@ public class ConnectManager {
                         }
                     });
 
-//            logger.info("connecting to " + endpoint.getHost() + ":" + endpoint.getPort());
             PAChannelFutures.get(endpoint).add(bootstrap.connect(endpoint.getHost(), endpoint.getPort()));
         }
 
@@ -144,18 +140,18 @@ public class ConnectManager {
          */
         for (Map.Entry<Endpoint, List<ChannelFuture>> pair : PAChannelFutures.entrySet()) {
             for (ChannelFuture future: pair.getValue())
-            try {
-                future.sync();
-                if (! future.isSuccess()) {
-                    logger.error("connection to " + future.toString() + " not established");
-                } else {
-                    logger.info("connection to " + pair.getKey().toString() + " is established");
-                    this.endpoint2Channel.get(pair.getKey()).add(future.channel());
-                    this.PAChannels.add(future.channel());
+                try {
+                    future.sync();
+                    if (!future.isSuccess()) {
+                        logger.error("connection to " + future.toString() + " not established");
+                    } else {
+                        logger.info("connection to " + pair.getKey().toString() + " is established");
+                        this.endpoint2Channel.get(pair.getKey()).add(future.channel());
+                        this.PAChannels.add(future.channel());
+                    }
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage());
                 }
-            } catch (InterruptedException e) {
-                logger.error(e.getMessage());
-            }
         }
 
 
@@ -184,8 +180,8 @@ public class ConnectManager {
     // todo for debug
     private Endpoint getEndpoint(Channel channel) {
         for (Map.Entry<Endpoint, List<Channel>> pair:
-            this.endpoint2Channel.entrySet()
-             ) {
+                this.endpoint2Channel.entrySet()
+                ) {
             for (Channel c :
                     pair.getValue()) {
                 if (c.equals(channel)) {
