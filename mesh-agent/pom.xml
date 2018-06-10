@@ -111,8 +111,15 @@
         <!--</plugins>-->
     <!--</build>-->
     <build>
-        <plugins>
+        <!--为什么没用啊！！-->
+        <!--<resources>-->
+            <!--<resource>-->
+                <!--<directory>src/main/resources</directory>-->
+            <!--</resource>-->
+        <!--</resources>-->
 
+
+        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

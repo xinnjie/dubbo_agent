@@ -1,6 +1,8 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
 import io.netty.util.ResourceLeakDetector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by gexinjie on 2018/6/1.

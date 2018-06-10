@@ -1,6 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -9,6 +10,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.CacheResponse;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
                 int savedReaderIndex = byteBuf.readerIndex();
                 Object msg = null;
                 try {
-                    msg = decode2(byteBuf);
+                    msg = doDecode(byteBuf);
                 } catch (Exception e) {
                     throw e;
                 }
@@ -48,7 +50,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         }
 
 
-        //list.add(decode2(byteBuf));
+        //list.add(doDecode(byteBuf));
     }
 
     enum DecodeResult {
@@ -63,7 +65,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
      * @param byteBuf
      * @return
      */
-    private Object decode2(ByteBuf byteBuf){
+    private Object doDecode(ByteBuf byteBuf){
 
         int savedReaderIndex = byteBuf.readerIndex();
         int readable = byteBuf.readableBytes();
@@ -81,7 +83,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
             return DecodeResult.NEED_MORE_INPUT;
         }
         byteBuf.readerIndex(savedReaderIndex);
-        logger.debug("hexdumping dubbo response: {} ",  ByteBufUtil.hexDump(byteBuf));
+        logger.info("hexdumping dubbo response: {} ",  ByteBufUtil.hexDump(byteBuf));
         byte[] data = new byte[totalLength];
         byteBuf.readBytes(data);
 
@@ -116,13 +118,11 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
         long requestId = Bytes.bytes2long(requestIdBytes,0);
 
-        Invocation invocation = new Invocation();
-        invocation.setRequestID(requestId);
-        invocation.setResult(new String(subArray));
-
-        logger.debug("PA received response from provider: {}:", invocation);
+        InvocationResponse response = new InvocationResponse(new String(subArray));
+        response.setRequestID(requestId);
+        logger.info("PA received response from provider: {}:", response);
         if (status == 20) {
-            return invocation;
+            return response;
         }
         logger.error("dubbo response received " + getStatusMessage(status));
         return DecodeResult.SKIP_INPUT;

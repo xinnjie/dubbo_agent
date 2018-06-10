@@ -1,4 +1,4 @@
-package com.alibaba.dubbo.performance.demo.nettyagent;
+package com.alibaba.dubbo.performance.demo.nettyagent.garage;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import io.netty.buffer.ByteBuf;

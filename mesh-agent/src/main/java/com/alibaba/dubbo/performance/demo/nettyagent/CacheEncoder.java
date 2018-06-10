@@ -25,7 +25,7 @@ public class CacheEncoder extends MessageToByteEncoder{
 
     //    public static final String NAME = "cache";
     private Logger logger = LoggerFactory.getLogger(CacheEncoder.class);
-    protected static final short MAGIC = (short) 0xdacc;
+    protected  static final short MAGIC = (short) 0xdacc;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
 
@@ -131,7 +131,7 @@ public class CacheEncoder extends MessageToByteEncoder{
             out.writerIndex(startWriteIndex);
             out.writeBytes(header);
             out.writerIndex(totalIndex);
-            logger.debug("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+            logger.info("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
 
             return;
         }
@@ -158,7 +158,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
             }
             functype.shallowCopyInPlace(invocation);
-            logger.debug("sending cached functype to CA: {}", invocation);
+            logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;
 
@@ -190,7 +190,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-        logger.debug("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
+        logger.info("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
 
     }
 

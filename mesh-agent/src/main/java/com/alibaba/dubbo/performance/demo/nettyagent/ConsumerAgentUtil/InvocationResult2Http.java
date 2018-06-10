@@ -1,6 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -16,7 +17,7 @@ public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
     private static final AsciiString CONTENT_LENGTH = new AsciiString("Content-Length");
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        Invocation invocation = (Invocation) msg;
+        InvocationResponse invocation = (InvocationResponse) msg;
         // todo 这里用了 unpooled 的 heap buffer
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
                 Unpooled.wrappedBuffer(invocation.getResult().getBytes()));

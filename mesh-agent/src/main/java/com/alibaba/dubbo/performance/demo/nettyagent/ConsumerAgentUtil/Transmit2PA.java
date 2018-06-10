@@ -5,6 +5,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
  */
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +29,12 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Invocation requestInvocation = (Invocation) msg;
+        InvocationRequest request = (InvocationRequest) msg;
         long requestID = Invocation.getUniqueRequestID();
-        requestInvocation.setRequestID(requestID);
+        request.setRequestID(requestID);
         Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
 //        logger.info("sending to Channel " + providerChannel.toString());
-        providerChannel.writeAndFlush(requestInvocation);
+        providerChannel.writeAndFlush(request);
     }
 
 

@@ -1,7 +1,9 @@
 package test;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Http2RequestInvocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -43,12 +45,13 @@ public class Http2RequestInvocationTest {
         );
 
         assertTrue(channel.writeInbound(buf));
-        Invocation invocation = (Invocation) channel.readInbound();
-        System.out.println(invocation);
-        assertEquals("com.alibaba.dubbo.performance.demo.provider.IHelloService", invocation.getInterfaceName());
-        assertEquals("hash", invocation.getMethodName());
-        assertEquals("Ljava/lang/String;", invocation.getParameterTypes()) ;
-        assertEquals("adsadjknjkstrange", invocation.getArguments());
+        InvocationRequest request = (InvocationRequest) channel.readInbound();
+        FuncType requestType = request.getFuncType();
+        System.out.println(request);
+        assertEquals("com.alibaba.dubbo.performance.demo.provider.IHelloService", requestType.getInterfaceName());
+        assertEquals("hash", requestType.getMethodName());
+        assertEquals("Ljava/lang/String;", requestType.getParameterTypes()) ;
+        assertEquals("adsadjknjkstrange", request.getArgument());
     }
 
 }

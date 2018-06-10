@@ -1,8 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.*;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -12,9 +11,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/6/1.
@@ -39,10 +36,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
-        // PA 连接到 provider
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
-        p.addLast("cacheEncoder", new CacheEncoder(cacheContext, requestToMethodFirstCache));
-        p.addLast("cacheDecoder", new CacheDecoder(cacheContext, requestToMethodFirstCache));
+        p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));
+        p.addLast("requestDecoder", new CacheRequestDecoder(cacheContext, requestToMethodFirstCache));
 
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
@@ -64,7 +60,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 //                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
-                         final Channel PALeftChannel = leftChannel;
+                         final Channel CAChannel = leftChannel;
                          // (todo 高亮) PA 和 CA 的连接部分
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
@@ -74,9 +70,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                                     Invocation invocation = (Invocation) msg;
-//                                     if (PALeftChannel.isActive()) {
-                                         PALeftChannel.writeAndFlush(invocation);
+                                     InvocationResponse response = (InvocationResponse) msg;
+//                                     if (CAChannel.isActive()) {
+                                         CAChannel.writeAndFlush(response);
 //                                     } else {
 //                                         logger.error("connection between CA and PA is broken");
 //                                     }

@@ -1,7 +1,9 @@
 package com.alibaba.dubbo.performance.demo.nettyagent;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers.PAInitializer;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.JsonUtils;
 import io.netty.buffer.ByteBuf;
@@ -30,7 +32,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
-        Invocation invocation = (Invocation) msg;
+        InvocationRequest request = (InvocationRequest) msg;
 
         // header.
         byte[] header = new byte[HEADER_LENGTH];
@@ -47,14 +49,14 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
 //        if (req.isEvent()) header[2] |= FLAG_EVENT;    // false
 
         // set request id.
-        Bytes.long2bytes(invocation.getRequestID(), header, 4);
+        Bytes.long2bytes(request.getRequestID(), header, 4);
 
         // encode request data.
         int savedWriteIndex = buffer.writerIndex();
         // 因为header 中需要知道 data length, 所以跳过头部写入 request
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        encodeRequestData(bos, invocation);
+        encodeRequestData(bos, request);
 
         int len = bos.size();
         buffer.writeBytes(bos.toByteArray());
@@ -64,24 +66,32 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         buffer.writerIndex(savedWriteIndex);
         buffer.writeBytes(header); // write header.
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
-        logger.debug("sending request to provider: {}, hexdump: {}",  invocation.toString(), ByteBufUtil.hexDump(buffer));
+        logger.info("sending request to provider: {}, hexdump: {}",  request.toString(), ByteBufUtil.hexDump(buffer));
     }
 
-    public void encodeRequestData(OutputStream out, Invocation inv) throws Exception {
+    public void encodeRequestData(OutputStream out, InvocationRequest request) throws Exception {
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
 
-        JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writer);
-        JsonUtils.writeObject(inv.getAttachment("path"), writer);
-        JsonUtils.writeObject(inv.getAttachment("version"), writer);
-        JsonUtils.writeObject(inv.getMethodName(), writer);
-        JsonUtils.writeObject(inv.getParameterTypes(), writer);
+//        JsonUtils.writeObject(request.getAttachment("dubbo", "2.0.1"), writer);
+        JsonUtils.writeObject("2.0.1", writer);
+//        JsonUtils.writeObject(request.getAttachment("path"), writer);
+        FuncType funcType = request.getFuncType();
+        JsonUtils.writeObject(funcType.getInterfaceName(), writer);
+//        JsonUtils.writeObject(request.getAttachment("version"), writer);
+        JsonUtils.writeObject(null, writer);
+        JsonUtils.writeObject(funcType.getMethodName(), writer);
+        JsonUtils.writeObject(funcType.getParameterTypes(), writer);
 
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         PrintWriter jsonwriter = new PrintWriter(new OutputStreamWriter(byteOut));
-        JsonUtils.writeObject(inv.getArguments(), jsonwriter);
+        JsonUtils.writeObject(request.getArgument(), jsonwriter);
 
         JsonUtils.writeBytes(byteOut.toByteArray(), writer);
-        JsonUtils.writeObject(inv.getAttachments(), writer);
+
+        JsonUtils.writeObject(request.getAttachments(), writer);
+//        writer.print(String.format("{\"path\":\"%s\"\n}", funcType.getInterfaceName()));
+//        writer.flush();
+
 
         /* *********
          debug

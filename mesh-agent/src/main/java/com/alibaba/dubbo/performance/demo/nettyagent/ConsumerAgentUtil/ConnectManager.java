@@ -2,8 +2,11 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.CacheRequestEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.CacheResponseDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.bootstrap.Bootstrap;
@@ -105,9 +108,8 @@ public class ConnectManager {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
-                            // 由于只有在 response 端会用 FirstTime Cache 这里传入了 null，表示不需要
-                            pipeline.addLast("CacheEncoder", new CacheEncoder(cacheContexts.get(endpoint), null));
-                            pipeline.addLast("CacheDecoder", new CacheDecoder(cacheContexts.get(endpoint), null));
+                            pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(endpoint)));
+                            pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(endpoint)));
                             // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
                             pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
                                 /*
@@ -116,16 +118,16 @@ public class ConnectManager {
                                  */
                                 @Override
                                 public void channelRead(ChannelHandlerContext ctx_, Object msg) throws Exception {
-                                    Invocation invocation = (Invocation) msg;
+                                    InvocationResponse response = (InvocationResponse) msg;
                                     // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
-                                    Channel consumerChannel = getAccordingConsumerChannel(invocation.getRequestID());
+                                    Channel consumerChannel = getAccordingConsumerChannel(response.getRequestID());
                                     if (consumerChannel != null) {
-                                        logger.debug("received result from PA， find the right consumer channel for request " + invocation.getRequestID() + ": " + consumerChannel.toString());
+                                        logger.info("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
                                         // 这里不要等待，只有发回回应，Consumer 才会继续发请求
-                                        consumerChannel.writeAndFlush(invocation);
+                                        consumerChannel.writeAndFlush(response);
                                     } else {
-                                        logger.error("request ID: {}  is duplicated! 肯定还有问题", invocation.getRequestID());
+                                        logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
                                     }
                                 }
                             });
@@ -177,44 +179,5 @@ public class ConnectManager {
         return selected;
     }
 
-    // todo for debug
-    private Endpoint getEndpoint(Channel channel) {
-        for (Map.Entry<Endpoint, List<Channel>> pair:
-                this.endpoint2Channel.entrySet()
-                ) {
-            for (Channel c :
-                    pair.getValue()) {
-                if (c.equals(channel)) {
-                    return pair.getKey();
-                }
-            }
-        }
-        logger.error("missing according endpoint " + channel.toString());
-        return null;
-    }
-
-//
-//    private Endpoint selectEndpoint() {
-//        return weightedEndpoints.get(random.nextInt(endpoints.size()));
-//    }
-
-//    public static void main(String[] args) {
-//        List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
-//                new Endpoint("provider-large",30000),
-//                new Endpoint("provider-medium",30000),
-//                new Endpoint("provider-small",30000)));
-//
-////        // 原来的想法：带权重的 weighted endpoints 整个类共享， 还是尽量避免使用 static 变量
-////        if (weightedEndpoints == null) {
-//        List<Integer> weight = Arrays.asList(6, 4, 2);
-//        assert endpoints.size() == weight.size();
-//        List<Endpoint> weightedEndpoints = new ArrayList<>();
-//        for (int i = 0; i < endpoints.size(); ++i) {
-//            for (int j = 0; j < weight.get(i); j++) {
-//                weightedEndpoints.add(endpoints.get(i));
-//            }
-//        }
-//        weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
-//    }
 
 }

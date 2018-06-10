@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="false">
+<configuration debug="true">
     <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
     <property name="LOG_HOME" value="${logs.dir}"/>
     <!-- 控制台输出 -->
@@ -9,7 +9,7 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
         </encoder>
     </appender>
-    <!-- 按照每天生成日志文件 -->
+     <!--按照每天生成日志文件 -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${LOG_HOME}/agent.log</file>
         <append>true</append>
@@ -19,7 +19,8 @@
     </appender>
 
     <!-- 日志输出级别 -->
-    <root level="INFO">
+    <!--<root level="info">-->
+    <root level="debug">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>

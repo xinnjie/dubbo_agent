@@ -1,6 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -31,19 +32,14 @@ public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
                     Attribute data = (Attribute) para;
                     paramMap.put(data.getName(), data.getValue());
                 }
-                final Invocation invocation = new Invocation();
 
             /*
             TODO 解读http，构建对应 invocation 的重要部分，多检查一下
              */
-                invocation.setMethodName(paramMap.get("method"));
-                invocation.setParameterTypes(paramMap.get("parameterTypesString"));
-                invocation.setArguments(paramMap.get("parameter"));
-                invocation.setInterfaceName(paramMap.get("interface"));
-                //  todo 在 attachment 中设置 path 主要是为了和 dubbo 兼容, 有点冗余
-//                invocation.setAttachment("path", paramMap.get("interface"));
-                logger.info("received from Consumer");
-                ctx.fireChannelRead(invocation);
+                InvocationRequest request = new InvocationRequest(paramMap.get("parameter"),
+                        paramMap.get("interface"), paramMap.get("method"), paramMap.get("parameterTypesString"));
+                logger.info("received from Consumer: {}", request);
+                ctx.fireChannelRead(request);
             } else {
                 logger.warn("CA received non-post request from consumer");
             }
