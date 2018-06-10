@@ -195,7 +195,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     invocation.setResult(parts[0]);
                 }
             }
-            logger.info("CA received response from PA: " + invocation.toString());
+            logger.debug("CA received response from PA: " + invocation.toString());
             return invocation;
 
         }
@@ -261,7 +261,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     logger.info("new functype insert into PA cache: {}", invocation.getMethodName());
                 }
             }
-            logger.info("received from CA: " + invocation.toString());
+            logger.debug("received from CA: {}", invocation);
             return invocation;
         }
 

@@ -131,7 +131,7 @@ public class CacheEncoder extends MessageToByteEncoder{
             out.writerIndex(startWriteIndex);
             out.writeBytes(header);
             out.writerIndex(totalIndex);
-            logger.info("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+            logger.debug("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
 
             return;
         }
@@ -158,7 +158,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
             }
             functype.shallowCopyInPlace(invocation);
-            logger.info("sending cached functype to CA: {}", invocation);
+            logger.debug("sending cached functype to CA: {}", invocation);
         }
         isCache = true;
 
@@ -190,7 +190,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-        logger.info("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
+        logger.debug("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
 
     }
 

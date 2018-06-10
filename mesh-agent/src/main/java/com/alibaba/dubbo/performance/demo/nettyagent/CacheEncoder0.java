@@ -95,7 +95,6 @@ public class CacheEncoder0 extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-//        logger.info("sending response to CA: " + invocation.toString());
 
     }
 
