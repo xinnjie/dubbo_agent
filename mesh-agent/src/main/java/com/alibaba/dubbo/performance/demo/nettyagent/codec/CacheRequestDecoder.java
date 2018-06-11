@@ -59,49 +59,43 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
      */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) throws Exception {
-        try {
-            do {
-                int savedReaderIndex = byteBuf.readerIndex();
-                Object msg = null;
-                try {
-                    msg = doDecode(byteBuf);
-                    assert  msg != null;
-                } catch (IndexOutOfBoundsException e) {
-                    byteBuf.readerIndex(savedReaderIndex);
-                    boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
-                            isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
-                            isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
-                    final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
-                    logger.error("informations:\n" +
-                                    "isRequest: {}\n" +
-                                    "isCached: {}\n" +
-                                    "isValid: {}\n" +
-                                    "dataLength(协议中的域): {}\n" +
-                                    "hexdump: {}\n" +
-                                    "IndexOutOfBoundsException: {}", isRequest,isCached, isValid, dataLength ,
-                            ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
-                    byteBuf.clear();
-                } catch (Exception e) {
-                    throw e;
-                }
-                // 如果还没有传输完成，将 bytebuf 恢复原状
-                if (msg == DecodeResult.NEED_MORE_INPUT) {
-                    byteBuf.readerIndex(savedReaderIndex);
-                    break;
-                } else if (msg == DecodeResult.DECODE_ERROR) {
-                    byteBuf.readerIndex(savedReaderIndex);
-                    logger.error("Decode Error, the bytes received is {}",
-                            ByteBufUtil.hexDump(byteBuf));
-                    byteBuf.clear();
-                }else{
-                    list.add(msg);
-                }
-            } while (byteBuf.isReadable());
-        } finally {
-            if (byteBuf.isReadable()) {
-                byteBuf.discardReadBytes();
+        do {
+            int savedReaderIndex = byteBuf.readerIndex();
+            Object msg = null;
+            try {
+                msg = doDecode(byteBuf);
+                assert  msg != null;
+            } catch (IndexOutOfBoundsException e) {
+                byteBuf.readerIndex(savedReaderIndex);
+                boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
+                        isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
+                        isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
+                final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
+                logger.error("informations:\n" +
+                                "isRequest: {}\n" +
+                                "isCached: {}\n" +
+                                "isValid: {}\n" +
+                                "dataLength(协议中的域): {}\n" +
+                                "hexdump: {}\n" +
+                                "IndexOutOfBoundsException: {}", isRequest,isCached, isValid, dataLength ,
+                        ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+                byteBuf.clear();
+            } catch (Exception e) {
+                throw e;
             }
-        }
+            // 如果还没有传输完成，将 bytebuf 恢复原状
+            if (msg == DecodeResult.NEED_MORE_INPUT) {
+                byteBuf.readerIndex(savedReaderIndex);
+                break;
+            } else if (msg == DecodeResult.DECODE_ERROR) {
+                byteBuf.readerIndex(savedReaderIndex);
+                logger.error("Decode Error, the bytes received is {}",
+                        ByteBufUtil.hexDump(byteBuf));
+                byteBuf.clear();
+            }else{
+                list.add(msg);
+            }
+        } while (byteBuf.isReadable());
 
 
     }
