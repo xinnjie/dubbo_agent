@@ -1,4 +1,4 @@
-package com.alibaba.dubbo.performance.demo.nettyagent;
+package com.alibaba.dubbo.performance.demo.nettyagent.codec;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
@@ -12,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -196,11 +194,8 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             newType.setInterfaceName(parts[2]);
             request.setArgument(parts[3]);
             request.setFuncType(newType);
-            // TODO 最好在添加缓存时先查看一下缓存中是否含有这个方法的缓存，这里先不做是因为只缓存了 methodID -> funcType 的缓存，如果要找就需要遍历一次 hashMap
-            //                if (!this.methods.containsKey(invocation))
 
             logger.info("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
-            // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
             if (!this.cacheContext.contains(newType)) {
                 int newMethodID = Invocation.getUniqueMethodID();
                 this.cacheContext.put(newMethodID, newType);

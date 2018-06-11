@@ -1,12 +1,10 @@
-package com.alibaba.dubbo.performance.demo.nettyagent;
+package com.alibaba.dubbo.performance.demo.nettyagent.codec;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
-import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +81,6 @@ public class CacheRequestEncoder extends MessageToByteEncoder {
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex - startWriteIndex);
         out.writerIndex(totalIndex);
-        logger.info("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+        logger.info("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
     }
 }

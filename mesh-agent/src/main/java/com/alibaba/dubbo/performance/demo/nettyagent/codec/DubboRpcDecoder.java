@@ -1,6 +1,5 @@
-package com.alibaba.dubbo.performance.demo.nettyagent;
+package com.alibaba.dubbo.performance.demo.nettyagent.codec;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import io.netty.buffer.ByteBuf;
@@ -10,7 +9,6 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.CacheResponse;
 import java.util.Arrays;
 import java.util.List;
 
@@ -120,7 +118,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
         InvocationResponse response = new InvocationResponse(new String(subArray));
         response.setRequestID(requestId);
-        logger.info("PA received response from provider: {}:", response);
+        logger.info("PA received response from provider: {}", response);
         if (status == 20) {
             return response;
         }

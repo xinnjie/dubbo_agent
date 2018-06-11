@@ -1,11 +1,10 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheRequestEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheResponseDecoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.Accumulator;
+import com.alibaba.dubbo.performance.demo.nettyagent.AgentConfig;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheResponseDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.Endpoint;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/6/4.
@@ -39,6 +39,7 @@ public class ConnectManager {
     // 使用桶装的容器，桶内设n 个板子，对 requestID 进行分流，减少修改时的阻塞
     final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
 
+    final AtomicInteger count = new AtomicInteger(0);
 
     /*
     语义上讲这两份 cache 是属于 CA 的
@@ -81,9 +82,6 @@ public class ConnectManager {
      * CA 右侧的连接们
      * 负责收到 PA 的回应后，编码为 invocation后发回给 consumer
      *
-     *
-     *
-     *
      * option:
      *   *** 尝试了一下这条路不通 A<->B 这种情况可以用 watermark 聚集数据
      *   但是 A->B->C
@@ -108,6 +106,7 @@ public class ConnectManager {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
+                            pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
                             pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(endpoint)));
                             pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(endpoint)));
                             // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
@@ -124,7 +123,6 @@ public class ConnectManager {
                                     if (consumerChannel != null) {
                                         logger.info("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
-                                        // 这里不要等待，只有发回回应，Consumer 才会继续发请求
                                         consumerChannel.writeAndFlush(response);
                                     } else {
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
@@ -155,8 +153,7 @@ public class ConnectManager {
                     logger.error(e.getMessage());
                 }
         }
-
-
+        Collections.shuffle(this.PAChannels);
     }
 
     private Channel getAccordingConsumerChannel(long requestID) {
@@ -169,13 +166,15 @@ public class ConnectManager {
     }
 
     /**
-     *
      * @param requestID 利用这个传入的 requestID 记录下 requestID 和 consumer Channel的对应关系
      * @return
      */
     public Channel getProviderChannel(Channel consumerChannel, long requestID) {
+        int count = this.count.incrementAndGet();
         this.request2CAChannel.put(requestID, consumerChannel);
-        Channel selected = PAChannels.get(random.nextInt(PAChannels.size()));
+        int channelIndex = (count % (AgentConfig.SEND_ONCE * PAChannels.size()) ) / AgentConfig.SEND_ONCE;
+        Channel selected = PAChannels.get(channelIndex);
+//        return new AbstractMap.SimpleImmutableEntry<>(selected, flush);
         return selected;
     }
 

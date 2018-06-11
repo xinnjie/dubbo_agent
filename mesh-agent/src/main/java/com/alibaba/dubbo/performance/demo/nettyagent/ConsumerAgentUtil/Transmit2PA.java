@@ -10,6 +10,7 @@ import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Transmit2PA extends ChannelInboundHandlerAdapter {
@@ -32,9 +33,8 @@ public class Transmit2PA extends ChannelInboundHandlerAdapter {
         InvocationRequest request = (InvocationRequest) msg;
         long requestID = Invocation.getUniqueRequestID();
         request.setRequestID(requestID);
-        Channel providerChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
-//        logger.info("sending to Channel " + providerChannel.toString());
-        providerChannel.writeAndFlush(request);
+        Channel PAChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
+        PAChannel.write(request);
     }
 
 

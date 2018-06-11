@@ -1,6 +1,5 @@
-package com.alibaba.dubbo.performance.demo.nettyagent;
+package com.alibaba.dubbo.performance.demo.nettyagent.codec;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
-import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -11,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

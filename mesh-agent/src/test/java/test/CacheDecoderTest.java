@@ -1,16 +1,11 @@
 package test;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheDecoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.CacheEncoder;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.garage.CacheDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Test;
-
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
 

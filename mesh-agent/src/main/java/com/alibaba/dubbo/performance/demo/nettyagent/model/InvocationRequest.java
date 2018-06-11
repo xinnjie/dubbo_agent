@@ -48,4 +48,13 @@ public class InvocationRequest {
         result.put("path", getFuncType().getInterfaceName());
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "InvocationRequest{" +
+                "funcType=" + funcType +
+                ", argument='" + argument + '\'' +
+                ", requestID=" + requestID +
+                '}';
+    }
 }

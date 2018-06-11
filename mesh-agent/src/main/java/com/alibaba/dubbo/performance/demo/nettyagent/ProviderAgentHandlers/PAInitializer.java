@@ -1,6 +1,10 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ProviderAgentHandlers;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.*;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestDecoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheResponseEncoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.DubboRpcDecoder;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationResponse;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import io.netty.bootstrap.Bootstrap;
@@ -37,6 +41,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
         ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
+        p.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
         p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));
         p.addLast("requestDecoder", new CacheRequestDecoder(cacheContext, requestToMethodFirstCache));
 
@@ -57,7 +62,6 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 //                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
 
-//                .option(ChannelOption.ALLOCATOR, UnpooledByteBufAllocator.DEFAULT)
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                          final Channel CAChannel = leftChannel;
@@ -65,14 +69,21 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
                              ChannelPipeline pipeline = ch.pipeline();
+                             pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
+//                                 final AtomicInteger count = new AtomicInteger(0);
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+//                                     boolean needToFlush = this.count.incrementAndGet() % AgentConfig.SEND_ONCE == 0;
                                      InvocationResponse response = (InvocationResponse) msg;
-//                                     if (CAChannel.isActive()) {
-                                         CAChannel.writeAndFlush(response);
+//                                     if (needToFlush) {
+//                                         logger.info("PA to CA Flush");
+//                                         CAChannel.writeAndFlush(response);
+//                                     } else {
+                                         CAChannel.write(response);
+//                                     }
 //                                     } else {
 //                                         logger.error("connection between CA and PA is broken");
 //                                     }
