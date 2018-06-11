@@ -81,6 +81,6 @@ public class CacheRequestEncoder extends MessageToByteEncoder {
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex - startWriteIndex);
         out.writerIndex(totalIndex);
-        logger.info("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+        logger.debug("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
     }
 }

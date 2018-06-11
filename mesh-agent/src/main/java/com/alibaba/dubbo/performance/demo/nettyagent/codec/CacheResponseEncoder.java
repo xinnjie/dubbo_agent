@@ -76,7 +76,7 @@ public class CacheResponseEncoder extends MessageToByteEncoder {
             if (response.getFuncType() == null) {
                 logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
             }
-            logger.info("sending cached functype to CA: {}", response.getFuncType());
+            logger.debug("sending cached functype to CA: {}", response.getFuncType());
         }
 
 
@@ -111,7 +111,7 @@ public class CacheResponseEncoder extends MessageToByteEncoder {
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex-startWriteIndex);
         out.writerIndex(totalIndex);
-        logger.info("sending response to CA: {} , hexdump: {}" , response, ByteBufUtil.hexDump(out));
+        logger.debug("sending response to CA: {} , hexdump: {}" , response, ByteBufUtil.hexDump(out));
 
     }
 

@@ -94,7 +94,7 @@ public class CacheResponseDecoder extends ByteToMessageDecoder {
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.info("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -136,7 +136,7 @@ public class CacheResponseDecoder extends ByteToMessageDecoder {
         if (isCache) {
             if (isValid) {
                 int methodID = byteBuf.readInt();
-                logger.info("first time in cached, method id is  {}", methodID);
+                logger.debug("first time in cached, method id is  {}", methodID);
                 //当 Valid 有效时，说明 response 第一次缓存 method id
                 // 在 invocation 的方法属性读取完毕后放入缓存
 
@@ -149,7 +149,7 @@ public class CacheResponseDecoder extends ByteToMessageDecoder {
                     newType.setParameterTypes(parts[1]);
                     newType.setInterfaceName(parts[2]);
                     if (!cacheContext.contains(newType)) {
-                        logger.info("add new cache method: {}", newType);
+                        logger.debug("add new cache method: {}", newType);
                     } else {
                         logger.warn("method is already in cache, before: {}, after: {}", cacheContext.get(methodID), newType);
                     }
@@ -170,7 +170,7 @@ public class CacheResponseDecoder extends ByteToMessageDecoder {
                 response.setResult(parts[0]);
             }
         }
-        logger.info("CA received response from PA: " + response);
+        logger.debug("CA received response from PA: " + response);
         return response;
 
 

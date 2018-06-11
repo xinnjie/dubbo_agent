@@ -141,7 +141,7 @@ public class CacheDecoder0 extends ByteToMessageDecoder{
             invocation.setArguments(parts[3]);
             int endIndex = byteBuf.readerIndex();
             byteBuf.readerIndex(startIndex);
-//            logger.info("received from CA: {}, byte raw: {}", invocation, ByteBufUtil.hexDump(byteBuf));
+//            logger.debug("received from CA: {}, byte raw: {}", invocation, ByteBufUtil.hexDump(byteBuf));
             byteBuf.readerIndex(endIndex);
             return invocation;
         }
