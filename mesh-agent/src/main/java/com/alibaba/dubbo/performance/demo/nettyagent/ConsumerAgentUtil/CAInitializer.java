@@ -30,7 +30,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        logger.info("CAInitializer.initChannel 被调用（确保服务端发起几次连接，被调用几次）");
+        logger.debug("CAInitializer.initChannel 被调用（确保服务端发起几次连接，被调用几次）");
         ChannelPipeline p = ch.pipeline();
 
         p.addLast("httpCodec", new HttpServerCodec());

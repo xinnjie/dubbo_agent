@@ -37,7 +37,7 @@ public class Http2Request extends ChannelInboundHandlerAdapter{
              */
                 InvocationRequest request = new InvocationRequest(paramMap.get("parameter"),
                         paramMap.get("interface"), paramMap.get("method"), paramMap.get("parameterTypesString"));
-                logger.info("received from Consumer: {}", request);
+                logger.debug("received from Consumer: {}", request);
                 ctx.fireChannelRead(request);
             } else {
                 logger.warn("CA received non-post request from consumer");

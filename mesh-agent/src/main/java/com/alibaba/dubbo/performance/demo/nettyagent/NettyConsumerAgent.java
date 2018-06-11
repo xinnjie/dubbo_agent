@@ -50,7 +50,7 @@ public class NettyConsumerAgent {
             endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
 
             waitProviderAgent();
-            logger.info("all providers has been found: {}", endpoints);
+            logger.debug("all providers has been found: {}", endpoints);
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
             try {
                 ServerBootstrap b = new ServerBootstrap();
@@ -89,9 +89,9 @@ public class NettyConsumerAgent {
                     InetSocketAddress address = new InetSocketAddress(endpoint.getHost(), endpoint.getPort());
                     sock.connect(address);
                     scanning = false;
-                    logger.info("Connected to provider, so provider must have been started");
+                    logger.debug("Connected to provider, so provider must have been started");
                 } catch (IOException e) {
-                    logger.info("Connect to provider at " + endpoint.getHost() + ":" + endpoint.getPort() + " failed (the provider may have not started) waiting and trying again");
+                    logger.debug("Connect to provider at " + endpoint.getHost() + ":" + endpoint.getPort() + " failed (the provider may have not started) waiting and trying again");
                     try {
                         Thread.sleep(2000);//2 seconds
                     } catch (InterruptedException ie) {

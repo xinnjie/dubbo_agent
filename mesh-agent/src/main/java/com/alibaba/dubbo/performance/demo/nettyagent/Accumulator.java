@@ -34,7 +34,7 @@ public class Accumulator extends ChannelOutboundHandlerAdapter{
             ctx.writeAndFlush(accu);
             accu = null;
         }
-        logger.info("{}  count {} ", ctx.channel(), accu.numComponents());
+        logger.debug("{}  count {} ", ctx.channel(), accu.numComponents());
 
     }
 }

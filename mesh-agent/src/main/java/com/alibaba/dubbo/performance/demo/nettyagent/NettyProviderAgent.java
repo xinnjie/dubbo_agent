@@ -64,7 +64,7 @@ public class NettyProviderAgent {
                         .childHandler(new PAInitializer(cacheContext, requestToMethodFirstCache));
 
                 Channel ch = b.bind().sync().channel();
-                logger.info("bound to port " + agentPort);
+                logger.debug("bound to port " + agentPort);
                 ch.closeFuture().sync();
             } finally {
                 bossGroup.shutdownGracefully();
@@ -85,10 +85,10 @@ public class NettyProviderAgent {
                 InetSocketAddress address =  new InetSocketAddress("127.0.0.1", port);
                 sock.connect(address);
                 scanning=false;
-                logger.info("Connected to provider, so provider must have been started");
+                logger.debug("Connected to provider, so provider must have been started");
             }
             catch(IOException e) {
-                logger.info("Connect to provider at port " + port + " failed (the provider may have not started, waiting and trying again");
+                logger.debug("Connect to provider at port " + port + " failed (the provider may have not started, waiting and trying again");
                 try {
                     Thread.sleep(2000);//2 seconds
                 } catch(InterruptedException ie){

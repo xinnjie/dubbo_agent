@@ -59,7 +59,7 @@ public class EtcdRegistry implements IRegistry {
         ByteSequence key = ByteSequence.fromString(strKey);
         ByteSequence val = ByteSequence.fromString(String.valueOf(maxConnectionNum));     // 目前只需要创建这个key,对应的value暂不使用,先留空
         kv.put(key,val, PutOption.newBuilder().withLeaseId(leaseId).build()).get();
-        logger.info("Register a new service at:" + strKey);
+        logger.debug("Register a new service at:" + strKey);
     }
 
     // 发送心跳到ETCD,表明该host是活着的
@@ -69,7 +69,7 @@ public class EtcdRegistry implements IRegistry {
                     try {
                         Lease.KeepAliveListener listener = lease.keepAlive(leaseId);
                         listener.listen();
-                        logger.info("KeepAlive lease:" + leaseId + "; Hex format:" + Long.toHexString(leaseId));
+                        logger.debug("KeepAlive lease:" + leaseId + "; Hex format:" + Long.toHexString(leaseId));
                     } catch (Exception e) { e.printStackTrace(); }
                 }
         );

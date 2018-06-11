@@ -31,11 +31,11 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
             Channel providerChannel = providerChannelFuture.channel();
             if (providerChannel.isActive()) {
 
-//                        logger.info("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
+//                        logger.debug("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
                 // 将收到的 request 发给 provider
 //                boolean needToFlush = this.count.incrementAndGet() % AgentConfig.SEND_ONCE == 0;
 //                if (needToFlush) {
-//                    logger.info("PA to Provider flush");
+//                    logger.debug("PA to Provider flush");
 //                    providerChannel.writeAndFlush(request);
 //                } else {
                     providerChannel.write(request);
@@ -48,12 +48,12 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
         else {
               logger.error("connection to provider is not established");
 
-//            logger.info("connection to provider is not established yet, add a listener");
+//            logger.debug("connection to provider is not established yet, add a listener");
 //            providerChannelFuture.addListener(new ChannelFutureListener() {
 //                @Override
 //                public void operationComplete(ChannelFuture future) throws Exception {
 //                    if (future.isSuccess()) {
-//                        logger.info("connection to provider established，and listener is called");
+//                        logger.debug("connection to provider established，and listener is called");
 //                        Channel providerChannel = future.channel();
 //                        providerChannel.writeAndFlush(request);
 //                    } else {
