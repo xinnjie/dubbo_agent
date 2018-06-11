@@ -1,6 +1,5 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -18,8 +17,8 @@ import java.util.*;
  */
 
 
-public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
-    private Logger logger = LoggerFactory.getLogger(Http2RequestInvocation.class);
+public class Http2Request extends ChannelInboundHandlerAdapter{
+    private Logger logger = LoggerFactory.getLogger(Http2Request.class);
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         FullHttpRequest req = (FullHttpRequest) msg;
@@ -38,7 +37,7 @@ public class Http2RequestInvocation extends ChannelInboundHandlerAdapter{
              */
                 InvocationRequest request = new InvocationRequest(paramMap.get("parameter"),
                         paramMap.get("interface"), paramMap.get("method"), paramMap.get("parameterTypesString"));
-                logger.debug("received from Consumer: {}", request);
+                logger.info("received from Consumer: {}", request);
                 ctx.fireChannelRead(request);
             } else {
                 logger.warn("CA received non-post request from consumer");

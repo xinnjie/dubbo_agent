@@ -64,7 +64,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         buffer.writerIndex(savedWriteIndex);
         buffer.writeBytes(header); // write header.
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
-        logger.debug("sending request to provider: {}, hexdump: {}",  request.toString(), ByteBufUtil.hexDump(buffer));
+        logger.info("sending request to provider: {}, hexdump: {}",  request.toString(), ByteBufUtil.hexDump(buffer));
     }
 
     public void encodeRequestData(OutputStream out, InvocationRequest request) throws Exception {

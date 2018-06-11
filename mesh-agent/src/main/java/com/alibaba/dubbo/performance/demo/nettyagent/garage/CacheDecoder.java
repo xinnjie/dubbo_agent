@@ -108,7 +108,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+        logger.info("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -158,7 +158,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
             assert isCache;
             if (isCache) {
                 invocation.setMethodID(byteBuf.readInt());
-                logger.debug("current response is cached : {}", invocation.getMethodID());
+                logger.info("current response is cached : {}", invocation.getMethodID());
 
                 if (isValid) {
                     //当 Valid 有效时，说明 response 第一次缓存 method id
@@ -172,7 +172,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                         invocation.setParameterTypes(parts[1]);
                         invocation.setInterfaceName(parts[2]);
                         if (!cacheContext.contains(invocation.getMethodID())) {
-                            logger.debug("add new cache method: {}", invocation.toString());
+                            logger.info("add new cache method: {}", invocation.toString());
                         } else {
                             logger.warn("method is already in cache, before: {}, after: {}", cacheContext.get(invocation.getMethodID()), invocation);
                         }
@@ -193,7 +193,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     invocation.setResult(parts[0]);
                 }
             }
-            logger.debug("CA received response from PA: " + invocation.toString());
+            logger.info("CA received response from PA: " + invocation.toString());
             return invocation;
 
         }
@@ -216,7 +216,7 @@ public class CacheDecoder extends ByteToMessageDecoder{
                     logger.error("method id {} is not cached, current cacheTable is {}, body hexdump(starts after methodiD): {}", invocation.getMethodID(), cacheContext.getMethodIDs(), ByteBufUtil.hexDump(byteBuf));
                 } else {
                     funcType.shallowCopyInPlace(invocation);
-                    logger.debug("current methods is cached, methodID is {}", invocation.getMethodID());
+                    logger.info("current methods is cached, methodID is {}", invocation.getMethodID());
                 }
 
 
@@ -249,17 +249,17 @@ public class CacheDecoder extends ByteToMessageDecoder{
                 // TODO 最好在添加缓存时先查看一下缓存中是否含有这个方法的缓存，这里先不做是因为只缓存了 methodID -> funcType 的缓存，如果要找就需要遍历一次 hashMap
                 //                if (!this.methods.containsKey(invocation))
 
-                logger.debug("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
+                logger.info("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
                 // 这里没把 methodID 写入到 invocation 中是因为没必要，invocation 马上会发给 dubbo，debbo 并不需要 methodID 信息
                 if (!this.cacheContext.contains(invocation)) {
                     int newMethodID = Invocation.getUniqueMethodID();
                     invocation.setMethodID(newMethodID);
                     this.cacheContext.put(newMethodID, invocation.shallowCopy());
                     this.requestToMethodFirstCache.put(invocation.getRequestID(), newMethodID);
-                    logger.debug("new functype insert into PA cache: {}", invocation.getMethodName());
+                    logger.info("new functype insert into PA cache: {}", invocation.getMethodName());
                 }
             }
-            logger.debug("received from CA: {}", invocation);
+            logger.info("received from CA: {}", invocation);
             return invocation;
         }
 

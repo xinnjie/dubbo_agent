@@ -2,14 +2,10 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/5/28.
@@ -34,7 +30,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
-        logger.debug("CAInitializer.initChannel 被调用（确保服务端发起几次连接，被调用几次）");
+        logger.info("CAInitializer.initChannel 被调用（确保服务端发起几次连接，被调用几次）");
         ChannelPipeline p = ch.pipeline();
 
         p.addLast("httpCodec", new HttpServerCodec());
@@ -43,7 +39,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         这个当 consumer 传来请求时，将 HTTP POST 中内容提取出来构造一个 invocation，并写入到 PA 中
          */
-        p.addLast("http2invocation", new Http2RequestInvocation());
+        p.addLast("http2invocation", new Http2Request());
         // Transmit2PA 必须把 invocation 的 requestID 传给 connectManager
         p.addLast("transmit2PA", new Transmit2PA(connectManager));
 
@@ -51,7 +47,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
            当写入 Invocation 到 Consumer 时，
            下面的这个 handler将 invocation 的 result 提取出来，构造出一个 POST 请求，传递个 http encoder
         */
-        p.addLast("responseInvocation2http", new InvocationResult2Http());
+        p.addLast("responseInvocation2http", new Result2Http());
     }
 
 

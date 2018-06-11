@@ -113,7 +113,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 if (methodID == null) {
                     logger.error("request is not cached {}, cuurent cache table is {}", invocation, cacheContext.getMethodIDs());
                 } else {
-                    logger.debug("the method of this request is cached");
+                    logger.info("the method of this request is cached");
                 }
                 Bytes.int2bytes(methodID, header, METHOD_ID_INDEX);
             } else {
@@ -129,7 +129,7 @@ public class CacheEncoder extends MessageToByteEncoder{
             out.writerIndex(startWriteIndex);
             out.writeBytes(header);
             out.writerIndex(totalIndex);
-            logger.debug("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+            logger.info("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
 
             return;
         }
@@ -156,7 +156,7 @@ public class CacheEncoder extends MessageToByteEncoder{
                 logger.error("current methodID {} not in cache table {}", cachedMethodID, cacheContext.getMethodIDs());
             }
             functype.shallowCopyInPlace(invocation);
-            logger.debug("sending cached functype to CA: {}", invocation);
+            logger.info("sending cached functype to CA: {}", invocation);
         }
         isCache = true;
 
@@ -188,7 +188,7 @@ public class CacheEncoder extends MessageToByteEncoder{
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-        logger.debug("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
+        logger.info("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
 
     }
 

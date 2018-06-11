@@ -18,7 +18,7 @@ public class CacheRequestEncoder extends MessageToByteEncoder {
     private final CacheContext cacheContext;
 
 
-    private Logger logger = LoggerFactory.getLogger(CacheRequestEncoder.class);
+    private Logger logger = LoggerFactory.getLogger(CacheRequestDecoder.class);
     protected  static final short MAGIC = (short) 0xdacc;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;
@@ -62,7 +62,7 @@ public class CacheRequestEncoder extends MessageToByteEncoder {
         out.writeByte(0);
         assert request.getRequestID() != -1;
         out.writeLong(request.getRequestID());
-        // 跳过 data length 部分，最会回填
+        // 跳过 data length 部分，最后回填
         // FIXME: 2018/6/10 有可能出现问题
         out.writerIndex(startWriteIndex + HEADER_LENGTH_MIN);
         if (isCache) {
@@ -81,6 +81,6 @@ public class CacheRequestEncoder extends MessageToByteEncoder {
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex - startWriteIndex);
         out.writerIndex(totalIndex);
-        logger.debug("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+        logger.info("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
     }
 }

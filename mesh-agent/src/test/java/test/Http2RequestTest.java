@@ -1,8 +1,7 @@
 package test;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Http2RequestInvocation;
+import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Http2Request;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -19,7 +18,7 @@ import static org.junit.Assert.*;
 /**
  * Created by gexinjie on 2018/6/2.
  */
-public class Http2RequestInvocationTest {
+public class Http2RequestTest {
     @Test
     public void testPostRead() throws Exception {
         String postStr = "POST / HTTP/1.1\n" +
@@ -39,7 +38,7 @@ public class Http2RequestInvocationTest {
                         ChannelPipeline p = ch.pipeline();
                         p.addLast(new HttpServerCodec());
                         p.addLast( new HttpObjectAggregator(100000));
-                        p.addLast(new Http2RequestInvocation());
+                        p.addLast(new Http2Request());
                     }
                 }
         );

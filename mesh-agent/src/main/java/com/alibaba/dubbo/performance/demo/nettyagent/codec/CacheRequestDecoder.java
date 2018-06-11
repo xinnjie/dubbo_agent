@@ -109,7 +109,7 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+        logger.info("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -195,15 +195,15 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             request.setArgument(parts[3]);
             request.setFuncType(newType);
 
-            logger.debug("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
+            logger.info("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
             if (!this.cacheContext.contains(newType)) {
                 int newMethodID = Invocation.getUniqueMethodID();
                 this.cacheContext.put(newMethodID, newType);
                 this.requestToMethodFirstCache.put(request.getRequestID(), newMethodID);
-                logger.debug("new functype insert into PA cache: {}", newType);
+                logger.info("new functype insert into PA cache: {}", newType);
             }
         }
-        logger.debug("received from CA: {}", request);
+        logger.info("received from CA: {}", request);
         return request;
 
     }

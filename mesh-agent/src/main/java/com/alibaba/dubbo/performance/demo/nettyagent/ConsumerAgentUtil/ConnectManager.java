@@ -2,6 +2,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.Accumulator;
 import com.alibaba.dubbo.performance.demo.nettyagent.AgentConfig;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheResponseDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
@@ -121,7 +122,7 @@ public class ConnectManager {
                                     // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
                                     Channel consumerChannel = getAccordingConsumerChannel(response.getRequestID());
                                     if (consumerChannel != null) {
-                                        logger.debug("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
+                                        logger.info("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
                                         // 将来自 PA 的 response 发回给 Consumer
                                         consumerChannel.writeAndFlush(response);
                                     } else {
@@ -145,7 +146,7 @@ public class ConnectManager {
                     if (!future.isSuccess()) {
                         logger.error("connection to " + future.toString() + " not established");
                     } else {
-                        logger.debug("connection to " + pair.getKey().toString() + " is established");
+                        logger.info("connection to " + pair.getKey().toString() + " is established");
                         this.endpoint2Channel.get(pair.getKey()).add(future.channel());
                         this.PAChannels.add(future.channel());
                     }

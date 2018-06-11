@@ -79,7 +79,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 //                                     boolean needToFlush = this.count.incrementAndGet() % AgentConfig.SEND_ONCE == 0;
                                      InvocationResponse response = (InvocationResponse) msg;
 //                                     if (needToFlush) {
-//                                         logger.debug("PA to CA Flush");
+//                                         logger.info("PA to CA Flush");
 //                                         CAChannel.writeAndFlush(response);
 //                                     } else {
                                          CAChannel.write(response);

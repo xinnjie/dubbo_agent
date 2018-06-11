@@ -1,6 +1,6 @@
 //package test;
 //
-//import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.InvocationResult2Http;
+//import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Result2Http;
 //import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 //import io.netty.channel.ChannelInitializer;
 //import io.netty.channel.ChannelPipeline;
@@ -24,7 +24,7 @@
 //    public void setUp() throws Exception {
 //        invocation.setResult("12342");
 //        channel = new EmbeddedChannel(
-//                new InvocationResult2Http()
+//                new Result2Http()
 //        );
 //        httpChannel = new EmbeddedChannel(
 //                new ChannelInitializer<EmbeddedChannel>() {

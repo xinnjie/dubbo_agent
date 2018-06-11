@@ -12,7 +12,7 @@ import io.netty.util.AsciiString;
 /**
  * Created by gexinjie on 2018/5/31.
  */
-public class InvocationResult2Http extends ChannelOutboundHandlerAdapter{
+public class Result2Http extends ChannelOutboundHandlerAdapter{
     private static final AsciiString CONTENT_TYPE = new AsciiString("Content-Type");
     private static final AsciiString CONTENT_LENGTH = new AsciiString("Content-Length");
     @Override
