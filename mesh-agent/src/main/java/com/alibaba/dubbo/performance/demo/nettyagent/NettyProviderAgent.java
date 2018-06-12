@@ -41,10 +41,11 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
     public void run() {
         try {
+            int workThreadsNum = Integer.parseInt(System.getProperty("worker.threads"));
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             //  TODO 要给 worker 分配几个线程?
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            EventLoopGroup workerGroup = new NioEventLoopGroup(workThreadsNum);
             waitProvider();
 
             CacheContext cacheContext = new CacheContext();
