@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
 <Appenders>
-    <property name="LOG_HOME" value="${sys:LOG_HOME}/agent.log"/>
     <Console name="Console" target="SYSTEM_OUT">
-        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %F:%L %-5level %logger{36} - %msg%n" />
     </Console>
-    <File name="LogFile" fileName="${LOG_HOME}/agent.log">
-        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+    <File name="LogFile" fileName="${sys:logs.dir}/agent.log">
+        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %F:%L %-5level %logger{36} - %msg%n" />
     </File>
 </Appenders>
 <Loggers>

@@ -35,6 +35,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             /*
             TODO 解读http，构建对应 invocation 的重要部分，多检查一下
              */
+
                 InvocationRequest request = new InvocationRequest(paramMap.get("parameter"),
                         paramMap.get("interface"), paramMap.get("method"), paramMap.get("parameterTypesString"));
                 logger.debug("received from Consumer: {}", request);

@@ -52,20 +52,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                 msg = doDecode(byteBuf);
                 assert  msg != null;
             } catch (IndexOutOfBoundsException e) {
-                byteBuf.readerIndex(savedReaderIndex);
-                boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
-                        isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
-                        isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
-                final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
-                logger.error("informations:\n" +
-                                "isRequest: {}\n" +
-                                "isCached: {}\n" +
-                                "isValid: {}\n" +
-                                "dataLength(协议中的域): {}\n" +
-                                "hexdump: {}\n" +
-                                "IndexOutOfBoundsException: {}", isRequest,isCached, isValid, dataLength ,
-                        ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
-                byteBuf.clear();
+                handleError(byteBuf, savedReaderIndex, e);
             } catch (Exception e) {
                 throw e;
             }
@@ -74,10 +61,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                 byteBuf.readerIndex(savedReaderIndex);
                 break;
             } else if (msg == DecodeResult.DECODE_ERROR) {
-                byteBuf.readerIndex(savedReaderIndex);
-                logger.error("Decode Error, the bytes received is {}",
-                        ByteBufUtil.hexDump(byteBuf));
-                byteBuf.clear();
+                handleError("decode error", byteBuf, savedReaderIndex);
             }else{
                 list.add(msg);
             }
@@ -104,9 +88,9 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             logger.error("not correct code");
             return DecodeResult.DECODE_ERROR;
         }
-        final boolean isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0 ;
-        final boolean isCache = (byteBuf.getByte(2) & FLAG_CACHE) != 0;
-        final boolean isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0;
+        final boolean isRequest = (byteBuf.getByte(startIndex+ 2) & FLAG_REQUEST) != 0 ;
+        final boolean isCache = (byteBuf.getByte(startIndex+ 2) & FLAG_CACHE) != 0;
+        final boolean isValid = (byteBuf.getByte(startIndex+ 2) & FLAG_VALID) != 0;
         final int dataLength = byteBuf.getInt(startIndex+DATA_LENGTH_INDEX);
 
         final int HeaderLength = isValid ? HEADER_LENGTH_MAX : HEADER_LENGTH_MIN;
@@ -171,4 +155,41 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
     }
 
+    private void handleError(ByteBuf byteBuf, int savedReaderIndex, Throwable e) {
+        byteBuf.readerIndex(savedReaderIndex);
+        boolean isCached = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_CACHE) != 0,
+                isValid = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_VALID) != 0,
+                isRequest = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_REQUEST) != 0;
+        long requestID = byteBuf.getLong(savedReaderIndex + REQEUST_ID_INDEX);
+        final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
+        logger.error("informations:\n" +
+                        "request id: {}\n" +
+                        "isRequest: {}\n" +
+                        "isCached: {}\n" +
+                        "isValid: {}\n" +
+                        "dataLength: {}\n" +
+                        "bytebuf readable: {}\n" +
+                        "hexdump: {}\n" +
+                        "IndexOutOfBoundsException: {}", requestID, isRequest,isCached, isValid, dataLength ,
+                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+        byteBuf.clear();
+    }
+    private void handleError(String errorMessage, ByteBuf byteBuf, int savedReaderIndex) {
+        byteBuf.readerIndex(savedReaderIndex);
+        boolean isCached = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_CACHE) != 0,
+                isValid = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_VALID) != 0,
+                isRequest = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_REQUEST) != 0;
+        long requestID = byteBuf.getLong(savedReaderIndex + REQEUST_ID_INDEX);
+        final int dataLength = byteBuf.getInt(savedReaderIndex + DATA_LENGTH_INDEX);
+        logger.error("error message: {}:\n" +
+                        "request id: {}\n" +
+                        "isRequest: {}\n" +
+                        "isCached: {}\n" +
+                        "isValid: {}\n" +
+                        "dataLength: {}\n" +
+                        "bytebuf readable: {}\n" +
+                        "hexdump: {}\n" , errorMessage, requestID, isRequest,isCached, isValid, dataLength ,
+                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf));
+        byteBuf.clear();
+    }
 }

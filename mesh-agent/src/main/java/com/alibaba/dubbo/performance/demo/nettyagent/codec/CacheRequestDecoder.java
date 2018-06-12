@@ -101,12 +101,12 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             logger.error("not correct code");
             return DecodeResult.DECODE_ERROR;
         }
-        final boolean isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0 ;
-        final boolean isCache = (byteBuf.getByte(2) & FLAG_CACHE) != 0;
-        final boolean isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0;
-        final int dataLength = byteBuf.getInt(startIndex+DATA_LENGTH_INDEX);
+        final boolean isRequest = (byteBuf.getByte(startIndex+ 2) & FLAG_REQUEST) != 0 ;
+        final boolean isCache = (byteBuf.getByte(startIndex+ 2) & FLAG_CACHE) != 0;
+        final boolean isValid = (byteBuf.getByte(startIndex+ 2) & FLAG_VALID) != 0;
+        final int dataLength = byteBuf.getInt(startIndex +DATA_LENGTH_INDEX);
         //todo 错误处理 返回 NULL
-        boolean isNull = (byteBuf.getByte(2) & FLAG_NULL) != 0;
+        boolean isNull = (byteBuf.getByte(startIndex + 2) & FLAG_NULL) != 0;
 
 
 
@@ -166,7 +166,14 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             String[] parts = body.split("\n");
             assert parts.length >= 4;
             if(parts.length < 4) {
-                logger.error("request format is not right, to few parts(expected 4): {}");
+                byteBuf.readerIndex(startIndex);
+                logger.error("request format is not right, to few parts(expected 4): {}\n" +
+                        "isCache: {}\n" +
+                        "isValid: {}\n" +
+                        "requestID: {}\n" +
+                        "datalength: {}\n" +
+                        "hexdump: {}", parts, isCache, isValid, requestId, dataLength, ByteBufUtil.hexDump(byteBuf));
+                return DecodeResult.DECODE_ERROR;
             }
             FuncType newType = new FuncType();
             newType.setMethodName(parts[0]);
@@ -190,10 +197,10 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
 
     private void handleError(ByteBuf byteBuf, int savedReaderIndex, Throwable e) {
         byteBuf.readerIndex(savedReaderIndex);
-        boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
-                isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
-                isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
-        long requestID = byteBuf.getLong(REQEUST_ID_INDEX);
+        boolean isCached = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_CACHE) != 0,
+                isValid = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_VALID) != 0,
+                isRequest = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_REQUEST) != 0;
+        long requestID = byteBuf.getLong(savedReaderIndex + REQEUST_ID_INDEX);
         final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
         logger.error("informations:\n" +
                         "request id: {}\n" +
@@ -209,11 +216,11 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
     }
     private void handleError(String errorMessage, ByteBuf byteBuf, int savedReaderIndex) {
         byteBuf.readerIndex(savedReaderIndex);
-        boolean isCached = (byteBuf.getByte(2) & FLAG_CACHE) != 0,
-                isValid = (byteBuf.getByte(2) & FLAG_VALID) != 0,
-                isRequest = (byteBuf.getByte(2) & FLAG_REQUEST) != 0;
-        long requestID = byteBuf.getLong(REQEUST_ID_INDEX);
-        final int dataLength = byteBuf.getInt(savedReaderIndex+DATA_LENGTH_INDEX);
+        boolean isCached = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_CACHE) != 0,
+                isValid = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_VALID) != 0,
+                isRequest = (byteBuf.getByte(savedReaderIndex + 2) & FLAG_REQUEST) != 0;
+        long requestID = byteBuf.getLong(savedReaderIndex + REQEUST_ID_INDEX);
+        final int dataLength = byteBuf.getInt(savedReaderIndex + DATA_LENGTH_INDEX);
         logger.error("error message: {}:\n" +
                         "request id: {}\n" +
                         "isRequest: {}\n" +
