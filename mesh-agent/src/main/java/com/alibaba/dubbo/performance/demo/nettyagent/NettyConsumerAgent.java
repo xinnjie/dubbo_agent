@@ -13,8 +13,8 @@ import com.alibaba.dubbo.performance.demo.nettyagent.registry.EtcdRegistry;
 import com.alibaba.dubbo.performance.demo.nettyagent.registry.IRegistry;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -32,7 +32,7 @@ public class NettyConsumerAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
     static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), 0);
 
-    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     Map<Endpoint, Integer> endpoints;
 //    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
 //            new Endpoint("provider-large",30000),

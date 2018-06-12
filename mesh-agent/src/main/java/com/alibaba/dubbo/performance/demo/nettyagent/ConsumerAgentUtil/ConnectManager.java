@@ -14,8 +14,8 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ConnectManager {
     private final EventLoopGroup eventLoopGroup;
-    private Logger logger = LoggerFactory.getLogger(ConnectManager.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     private List<Endpoint> weightedEndpoints = null;
     static final Random random = new Random();
     private final Map<Endpoint, Integer> endpoints;

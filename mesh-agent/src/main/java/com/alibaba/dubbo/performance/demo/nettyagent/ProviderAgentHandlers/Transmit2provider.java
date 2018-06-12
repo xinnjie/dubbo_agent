@@ -4,8 +4,8 @@ import com.alibaba.dubbo.performance.demo.nettyagent.AgentConfig;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by gexinjie on 2018/6/7.
  */
 public class Transmit2provider extends ChannelInboundHandlerAdapter{
-    private Logger logger = LoggerFactory.getLogger(Transmit2provider.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 //    private AtomicInteger count = new AtomicInteger(0);
 
     ChannelFuture providerChannelFuture;

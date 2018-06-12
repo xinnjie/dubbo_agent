@@ -6,15 +6,15 @@ import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 /**
  * Created by gexinjie on 2018/5/28.
  */
 public class CAInitializer extends ChannelInitializer<SocketChannel> {
     private final ConnectManager connectManager;
-    private Logger logger = LoggerFactory.getLogger(CAInitializer.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public CAInitializer(ConnectManager manager) {

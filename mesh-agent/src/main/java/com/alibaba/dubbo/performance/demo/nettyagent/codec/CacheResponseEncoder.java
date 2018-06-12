@@ -6,8 +6,8 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +20,7 @@ public class CacheResponseEncoder extends MessageToByteEncoder {
     private final CacheContext cacheContext;
 
 
-    private Logger logger = LoggerFactory.getLogger(CacheResponseEncoder.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     protected  static final short MAGIC = (short) 0xdacc;
     protected  static final int HEADER_LENGTH_MIN = 16;
     protected  static final int HEADER_LENGTH_MAX = 20;

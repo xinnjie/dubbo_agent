@@ -1,4 +1,4 @@
-package test;
+package test.garage;
 
 import com.alibaba.dubbo.performance.demo.nettyagent.garage.CacheDecoder0;
 import com.alibaba.dubbo.performance.demo.nettyagent.garage.CacheEncoder0;

@@ -18,8 +18,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.ResourceLeakDetector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -30,7 +30,7 @@ public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
     static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), Integer.parseInt(System.getProperty("connection.num")));
 
-    private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
 

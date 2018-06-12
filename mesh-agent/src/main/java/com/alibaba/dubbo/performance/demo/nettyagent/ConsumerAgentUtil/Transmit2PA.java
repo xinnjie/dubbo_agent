@@ -8,12 +8,12 @@ import com.alibaba.dubbo.performance.demo.nettyagent.codec.Http2Request;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 public class Transmit2PA extends ChannelInboundHandlerAdapter {
     private final ConnectManager connectManger;
-    private Logger logger = LoggerFactory.getLogger(Http2Request.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public Transmit2PA(ConnectManager manager) {

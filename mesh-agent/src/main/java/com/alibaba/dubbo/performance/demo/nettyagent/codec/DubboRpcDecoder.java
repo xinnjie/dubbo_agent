@@ -6,8 +6,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +18,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
     protected static final int STATUS_INDEX = 3;
 
     protected static final byte FLAG_EVENT = (byte) 0x20;
-    private Logger logger = LoggerFactory.getLogger(DubboRpcDecoder.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     @Override

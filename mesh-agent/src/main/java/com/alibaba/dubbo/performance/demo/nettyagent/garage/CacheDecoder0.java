@@ -5,8 +5,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CacheDecoder0 extends ByteToMessageDecoder{
     //    public static final String NAME = "cache";
     static private Set<Long> requestsIDs = Collections.synchronizedSet(new HashSet<>());
-    private Logger logger = LoggerFactory.getLogger(CacheDecoder0.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
     protected static final short MAGIC = (short) 0xdacc;
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;

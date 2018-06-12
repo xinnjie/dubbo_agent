@@ -7,8 +7,8 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 
 public class EtcdRegistry implements IRegistry {
-    private Logger logger = LoggerFactory.getLogger(EtcdRegistry.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     // 该EtcdRegistry没有使用etcd的Watch机制来监听etcd的事件
     // 添加watch，在本地内存缓存地址列表，可减少网络调用的次数
 

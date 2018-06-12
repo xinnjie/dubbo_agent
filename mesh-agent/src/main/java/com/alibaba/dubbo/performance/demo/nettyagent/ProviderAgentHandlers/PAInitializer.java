@@ -12,8 +12,8 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,7 +24,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     // 语义上来说这三份 cache 都属于 PA
     private final CacheContext cacheContext;
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
-    private Logger logger = LoggerFactory.getLogger(PAInitializer.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {

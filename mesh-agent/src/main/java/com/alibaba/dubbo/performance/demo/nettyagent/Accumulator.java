@@ -6,8 +6,7 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * Created by gexinjie on 2018/6/11.
@@ -15,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class Accumulator extends ChannelOutboundHandlerAdapter{
     CompositeByteBuf accu;
     final int sendOnce;
-    private Logger logger = LoggerFactory.getLogger(Accumulator.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public Accumulator(int sendOnce) {

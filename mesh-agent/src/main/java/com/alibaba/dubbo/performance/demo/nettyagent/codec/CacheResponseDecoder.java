@@ -8,8 +8,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.netty.handler.codec.DecoderException;
+import org.apache.logging.log4j.LogManager;
+
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
  * Created by gexinjie on 2018/5/29.
  */
 public class CacheResponseDecoder extends ByteToMessageDecoder {
-    private Logger logger = LoggerFactory.getLogger(CacheResponseDecoder.class);
+org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
     protected static final short MAGIC = (short) 0xdacc;
     private final CacheContext cacheContext;
