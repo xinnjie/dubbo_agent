@@ -166,6 +166,9 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
             String[] parts = body.split("\n");
             assert parts.length >= 4;
+            if(parts.length < 4) {
+                logger.error("request format is not right, to few parts(expected 4): {}");
+            }
             FuncType newType = new FuncType();
             newType.setMethodName(parts[0]);
             newType.setParameterTypes(parts[1]);

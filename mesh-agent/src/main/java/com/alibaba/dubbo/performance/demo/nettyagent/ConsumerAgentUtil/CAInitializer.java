@@ -1,5 +1,7 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.Http2Request;
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.Result2Http;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;

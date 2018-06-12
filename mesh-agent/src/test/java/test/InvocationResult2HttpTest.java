@@ -1,6 +1,6 @@
 //package test;
 //
-//import com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil.Result2Http;
+//import com.alibaba.dubbo.performance.demo.nettyagent.codec.Result2Http;
 //import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 //import io.netty.channel.ChannelInitializer;
 //import io.netty.channel.ChannelPipeline;

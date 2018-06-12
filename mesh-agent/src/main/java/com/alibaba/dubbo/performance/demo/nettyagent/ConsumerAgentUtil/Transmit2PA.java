@@ -4,6 +4,7 @@ package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
  * Created by gexinjie on 2018/6/4.
  */
 
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.Http2Request;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.channel.*;
