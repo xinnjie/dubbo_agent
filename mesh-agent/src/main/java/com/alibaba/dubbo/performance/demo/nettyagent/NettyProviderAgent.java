@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
-    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), 50);
+    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), 40);
 
     private Logger logger = LoggerFactory.getLogger(NettyConsumerAgent.class);
 

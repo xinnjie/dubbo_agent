@@ -19,7 +19,7 @@ import java.util.List;
  * Created by gexinjie on 2018/5/29.
  */
 public class CacheResponseDecoder extends ByteToMessageDecoder {
-    private Logger logger = LoggerFactory.getLogger(CacheDecoder.class);
+    private Logger logger = LoggerFactory.getLogger(CacheResponseDecoder.class);
 
     protected static final short MAGIC = (short) 0xdacc;
     private final CacheContext cacheContext;
