@@ -15,6 +15,8 @@ import io.netty.util.ByteProcessor;
 import org.apache.logging.log4j.LogManager;
 
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -67,23 +69,27 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             byteBuf.readerIndex(beginIndex);
             //todo 这边可能会出现 indexoutofBound
             String content = byteBuf.readCharSequence(endIndex - beginIndex, Charset.forName("utf-8")).toString();
-            switch (count) {
-                case 0: {
-                    funcType.setInterfaceName(content);
-                    break;
+            try {
+                switch (count) {
+                    case 0: {
+                        funcType.setInterfaceName(URLDecoder.decode(content, "utf-8"));
+                        break;
+                    }
+                    case 1: {
+                        funcType.setMethodName(URLDecoder.decode(content, "utf-8"));
+                        break;
+                    }
+                    case 2: {
+                        funcType.setParameterTypes(URLDecoder.decode(content, "utf-8"));
+                        break;
+                    }
+                    default: {
+                        // 这个错误不会出现
+                        logger.error("index out of bound");
+                    }
                 }
-                case 1: {
-                    funcType.setMethodName(content);
-                    break;
-                }
-                case 2: {
-                    funcType.setParameterTypes(content);
-                    break;
-                }
-                default: {
-                    // 这个错误不会出现
-                    logger.error("index out of bound");
-                }
+            } catch (UnsupportedEncodingException e) {
+                logger.error("encoding not supported", e);
             }
             beginIndex = endIndex + 1;
         }

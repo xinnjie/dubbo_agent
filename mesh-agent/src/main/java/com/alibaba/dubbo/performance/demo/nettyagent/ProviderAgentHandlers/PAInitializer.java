@@ -24,7 +24,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     // 语义上来说这三份 cache 都属于 PA
     private final CacheContext cacheContext;
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
-org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+    org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
@@ -60,7 +60,6 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-//                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
 
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
@@ -73,20 +72,10 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
-//                                 final AtomicInteger count = new AtomicInteger(0);
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//                                     boolean needToFlush = this.count.incrementAndGet() % AgentConfig.SEND_ONCE == 0;
                                      InvocationResponse response = (InvocationResponse) msg;
-//                                     if (needToFlush) {
-//                                         logger.debug("PA to CA Flush");
-//                                         CAChannel.writeAndFlush(response);
-//                                     } else {
-                                         CAChannel.write(response);
-//                                     }
-//                                     } else {
-//                                         logger.error("connection between CA and PA is broken");
-//                                     }
+                                     CAChannel.write(response);
                                  }
                              });
                          }

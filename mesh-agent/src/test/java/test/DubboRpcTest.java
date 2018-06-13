@@ -32,7 +32,7 @@ public class DubboRpcTest {
 //    private Invocation dubboRequest = new Invocation();
 //    private Invocation dubboReponse = new Invocation();
     long requestID = 5;
-    String arguments = "hkhdkfhakjf";
+    String arguments = "hk2313123hdkfhakjf";
     int methodID = 23;
     byte[] responseHeader = new byte[16];
     private EmbeddedChannel dubboEncodeChannel;
@@ -73,7 +73,7 @@ public class DubboRpcTest {
                 "null\n" +
                 "\"hash\"\n" +
                 "\"Ljava/lang/String;\"\n" +
-                "\"hkhdkfhakjf\"\n" +
+                "\""+ arguments +"\"\n" +
                 "{\"path\":\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"}\n", new String(bodyBytes));
     }
 

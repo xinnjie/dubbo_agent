@@ -13,11 +13,18 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DubboRpcDecoder extends ByteToMessageDecoder {
+
+    protected static final short MAGIC = (short) 0xdabb;
+
     // header length.
     protected static final int HEADER_LENGTH = 16;
     protected static final int STATUS_INDEX = 3;
 
     protected static final byte FLAG_EVENT = (byte) 0x20;
+
+
+    protected  static final int REQEUST_ID_INDEX = 4;
+    protected  static final int DATA_LENGTH_INDEX = 12;
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
@@ -36,8 +43,12 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                 if (msg == DecodeResult.NEED_MORE_INPUT) {
                     byteBuf.readerIndex(savedReaderIndex);
                     break;
+                } else if (msg == DecodeResult.SKIP_INPUT) {
+                    byteBuf.readerIndex(savedReaderIndex);
+                    logger.error("error debbo response, hexdump :{}", ByteBufUtil.hexDump(byteBuf));
+                    byteBuf.clear();
                 }
-                if (msg != DecodeResult.SKIP_INPUT) {
+                else {
                     list.add(msg);
                 }
             } while (byteBuf.isReadable());
@@ -52,7 +63,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     }
 
     enum DecodeResult {
-        NEED_MORE_INPUT, SKIP_INPUT
+        NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
 
     /**
@@ -72,19 +83,21 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             return DecodeResult.NEED_MORE_INPUT;
         }
 
-        byte[] header = new byte[HEADER_LENGTH];
-        byteBuf.readBytes(header);
-        byte[] dataLen = Arrays.copyOfRange(header,12,16);
-        int len = Bytes.bytes2int(dataLen);
-        int totalLength = len + HEADER_LENGTH;
+        short magic = byteBuf.readShort();
+        if (magic != MAGIC) {
+            logger.error("not dubbo MAGIC");
+            return DecodeResult.SKIP_INPUT;
+        }
+        byteBuf.readByte();
+        byte status = byteBuf.readByte();
+        byteBuf.readerIndex(savedReaderIndex + REQEUST_ID_INDEX);
+        long requestID = byteBuf.readLong();
+        int bodyLength = byteBuf.readInt();
+        int totalLength = bodyLength + HEADER_LENGTH;
         if (readable < totalLength) {
             return DecodeResult.NEED_MORE_INPUT;
         }
-        byteBuf.readerIndex(savedReaderIndex);
-        logger.debug("hexdumping dubbo response: {} ",  ByteBufUtil.hexDump(byteBuf));
-        byte[] data = new byte[totalLength];
-        byteBuf.readBytes(data);
-
+//        logger.debug("hexdumping dubbo response: {} ",  ByteBufUtil.hexDump(byteBuf));
         //status
         /*
           20 - OK
@@ -98,7 +111,6 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
           90 - CLIENT_ERROR
           100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
          */
-        byte status = data[STATUS_INDEX];
 
         //byte[] data = new byte[byteBuf.readableBytes()];
         //byteBuf.readBytes(data);
@@ -109,15 +121,13 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
          q: 前面去掉一个换行为什么要 +2， 而不是 +1
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
-        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 2, data.length -1 );
+        byte[] body = new byte[bodyLength];
+        byteBuf.readBytes(body);
 
-//        logger.debug("receive dubbo protocal body {" + new String(subArray) + "}");
-
-        byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
-        long requestId = Bytes.bytes2long(requestIdBytes,0);
+        byte[] subArray = Arrays.copyOfRange(body,2, body.length -1 );
 
         InvocationResponse response = new InvocationResponse(new String(subArray));
-        response.setRequestID(requestId);
+        response.setRequestID(requestID);
         logger.debug("PA received response from provider: {}", response);
         if (status == 20) {
             return response;
