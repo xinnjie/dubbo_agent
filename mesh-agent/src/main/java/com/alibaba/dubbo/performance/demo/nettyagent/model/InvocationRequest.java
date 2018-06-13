@@ -1,5 +1,8 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.model;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+
 import java.util.HashMap;
 import java.util.Map;
 

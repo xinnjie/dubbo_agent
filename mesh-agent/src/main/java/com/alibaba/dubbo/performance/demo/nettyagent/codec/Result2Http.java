@@ -26,4 +26,6 @@ public class Result2Http extends ChannelOutboundHandlerAdapter{
         ctx.write(response);
     }
 
+
+
 }
