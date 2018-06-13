@@ -16,7 +16,7 @@ if [[ "$1" == "consumer" ]]; then
        -Detcd.url=$ETCD_URL \
        -Dconnection.num=30 \
        -Dlogs.dir=/root/logs \
-       -Dworker.threads=6 \
+       -Dworker.threads=1 \
        /root/dists/mesh-agent.jar
 elif [[ "$1" == "provider-small" ]]; then
   echo "Starting small provider agent..."
@@ -29,7 +29,7 @@ elif [[ "$1" == "provider-small" ]]; then
        -Dconnection.num=20 \
        -Detcd.url=$ETCD_URL \
        -Dlogs.dir=/root/logs \
-       -Dworker.threads=3 \
+       -Dworker.threads=1 \
        /root/dists/mesh-agent.jar
 elif [[ "$1" == "provider-medium" ]]; then
   echo "Starting medium provider agent..."
@@ -40,7 +40,7 @@ elif [[ "$1" == "provider-medium" ]]; then
        -Ddubbo.protocol.port=20880 \
        -Dserver.port=30000 \
        -Dconnection.num=40 \
-       -Dworker.threads=3 \
+       -Dworker.threads=1 \
        -Detcd.url=$ETCD_URL \
        -Dlogs.dir=/root/logs \
        /root/dists/mesh-agent.jar
@@ -53,7 +53,7 @@ elif [[ "$1" == "provider-large" ]]; then
        -Ddubbo.protocol.port=20880 \
        -Dserver.port=30000 \
        -Dconnection.num=45 \
-       -Dworker.threads=4 \
+       -Dworker.threads=1 \
        -Detcd.url=$ETCD_URL \
        -Dlogs.dir=/root/logs \
        /root/dists/mesh-agent.jar
