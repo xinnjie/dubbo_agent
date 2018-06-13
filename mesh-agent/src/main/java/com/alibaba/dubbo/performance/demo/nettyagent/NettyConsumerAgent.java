@@ -44,9 +44,11 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     }
     public void run() {
         try {
+            int workThreadsNum = Integer.parseInt(System.getProperty("worker.threads"));
+
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            EventLoopGroup workerGroup = new NioEventLoopGroup(workThreadsNum);
             endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
 
             waitProviderAgent();
