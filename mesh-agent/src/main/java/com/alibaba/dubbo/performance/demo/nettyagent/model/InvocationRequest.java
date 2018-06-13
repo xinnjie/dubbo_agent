@@ -11,10 +11,10 @@ import java.util.Map;
  */
 public class InvocationRequest {
     FuncType funcType;
-    String argument;
+    ByteBuf argument;
     long requestID = -1;
 
-    public InvocationRequest(String argument, String interfaceName, String methodName, String parameterTypes) {
+    public InvocationRequest(ByteBuf argument, String interfaceName, String methodName, String parameterTypes) {
         this.argument = argument;
         this.funcType = new FuncType(interfaceName, methodName, parameterTypes);
     }
@@ -26,7 +26,7 @@ public class InvocationRequest {
         this.funcType = funcType;
     }
 
-    public void setArgument(String argument) {
+    public void setArgument(ByteBuf argument) {
         this.argument = argument;
     }
 
@@ -34,7 +34,7 @@ public class InvocationRequest {
         return funcType;
     }
 
-    public String getArgument() {
+    public ByteBuf getArgument() {
         return argument;
     }
 
@@ -47,7 +47,7 @@ public class InvocationRequest {
     }
 
     public Map<String, String> getAttachments() {
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>(1);
         result.put("path", getFuncType().getInterfaceName());
         return result;
     }

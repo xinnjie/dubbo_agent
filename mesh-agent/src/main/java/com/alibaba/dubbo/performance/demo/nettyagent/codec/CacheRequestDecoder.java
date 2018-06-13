@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.util.ByteProcessor;
 import org.apache.logging.log4j.LogManager;
 
 import java.nio.charset.Charset;
@@ -146,10 +147,11 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             // todo 现在假设只有一个参数，以后改进
             if (byteBuf.readableBytes() < bodyLength) {
                 logger.error("body data length is not right: {}, body hexdum(starts after methodiD) : {}", bodyLength, ByteBufUtil.hexDump(byteBuf));
+                return DecodeResult.DECODE_ERROR;
             }
-            String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
-            request.setArgument(body.trim());
-
+//            String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
+            ByteBuf argument = byteBuf.retainedSlice(byteBuf.readerIndex(), bodyLength);
+            request.setArgument(argument);
         }
         /*
         假如没有 cache 过，将现在这个 method 进行 cache
@@ -162,10 +164,11 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
                   * Service name
                   * Service version
              */
-            String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
-            String[] parts = body.split("\n");
-            assert parts.length >= 4;
-            if(parts.length < 4) {
+            int lastLFIndex = byteBuf.forEachByteDesc(byteBuf.readerIndex(), bodyLength, ByteProcessor.FIND_LF);
+            String Funcbody = byteBuf.readCharSequence(lastLFIndex-byteBuf.readerIndex()+1, Charset.forName("utf-8")).toString();
+            String[] parts = Funcbody.split("\n");
+            assert parts.length >= 3;
+            if(parts.length < 3) {
                 byteBuf.readerIndex(startIndex);
                 logger.error("request format is not right, to few parts(expected 4): {}\n" +
                         "isCache: {}\n" +
@@ -179,7 +182,8 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             newType.setMethodName(parts[0]);
             newType.setParameterTypes(parts[1]);
             newType.setInterfaceName(parts[2]);
-            request.setArgument(parts[3]);
+            ByteBuf argument = byteBuf.retainedSlice(byteBuf.readerIndex(), bodyLength-Funcbody.length());
+            request.setArgument(argument);
             request.setFuncType(newType);
 
             logger.debug("PA current methods size: {}, first request size: {}", cacheContext.size(), requestToMethodFirstCache.size());
@@ -191,6 +195,7 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             }
         }
         logger.debug("received from CA: {}", request);
+        byteBuf.readerIndex(startIndex + dataLength);
         return request;
 
     }

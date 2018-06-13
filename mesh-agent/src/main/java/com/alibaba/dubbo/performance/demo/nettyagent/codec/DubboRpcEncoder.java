@@ -4,9 +4,11 @@ import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.Bytes;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.JsonUtils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
+import com.alibaba.fastjson.JSON;
+import io.netty.buffer.*;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.apache.logging.log4j.LogManager;
 
@@ -15,8 +17,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.util.HashMap;
 
-public class DubboRpcEncoder extends MessageToByteEncoder{
+public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
     // header length.
     protected static final int HEADER_LENGTH = 16;
     // magic header.
@@ -25,72 +29,83 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
     protected static final byte FLAG_REQUEST = (byte) 0x80;
     protected static final byte FLAG_TWOWAY = (byte) 0x40;
     protected static final byte FLAG_EVENT = (byte) 0x20;
-org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
+    protected  static final int REQEUST_ID_INDEX = 4;
+    protected  static final int DATA_LENGTH_INDEX = 12;
+    org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         InvocationRequest request = (InvocationRequest) msg;
 
-        // header.
-        byte[] header = new byte[HEADER_LENGTH];
-        // set magic number.
-        Bytes.short2bytes(MAGIC, header);
+        ByteBuf header = ctx.alloc().directBuffer(HEADER_LENGTH, HEADER_LENGTH);
 
+        // set magic number.
+        header.writeShort(MAGIC);
         // set request and serialization flag.
         // 6 是 fastjson
-        header[2] = (byte) (FLAG_REQUEST | 6);
+        byte flag = (byte) (FLAG_REQUEST | 6);
 
 //        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;   // true
-        header[2] |= FLAG_TWOWAY;
+        flag |= FLAG_TWOWAY;
 
 //        if (req.isEvent()) header[2] |= FLAG_EVENT;    // false
-
+        header.writeByte(flag);
+        header.writeByte(0);
         // set request id.
-        Bytes.long2bytes(request.getRequestID(), header, 4);
-
+        header.writeLong(request.getRequestID());
         // encode request data.
-        int savedWriteIndex = buffer.writerIndex();
-        // 因为header 中需要知道 data length, 所以跳过头部写入 request
-        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        encodeRequestData(bos, request);
 
-        int len = bos.size();
-        buffer.writeBytes(bos.toByteArray());
-        Bytes.int2bytes(len, header, 12);
+        ByteBuf body = encodeRequestData(ctx.alloc(), request);
 
-        // write
-        buffer.writerIndex(savedWriteIndex);
-        buffer.writeBytes(header); // write header.
-        buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
-        logger.debug("sending request to provider: {}, hexdump: {}",  request.toString(), ByteBufUtil.hexDump(buffer));
+        CompositeByteBuf requestBuff = ctx.alloc().compositeBuffer();
+
+        // 写入data length
+        header.writeInt(body.readableBytes() + HEADER_LENGTH);
+        requestBuff.addComponent(true, header);
+        requestBuff.addComponent(true, body );
+        ctx.write(requestBuff, promise);
     }
 
-    public void encodeRequestData(OutputStream out, InvocationRequest request) throws Exception {
-        PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
+    public ByteBuf encodeRequestData(ByteBufAllocator allocator, InvocationRequest request) throws Exception {
 
-//        JsonUtils.writeObject(request.getAttachment("dubbo", "2.0.1"), writer);
-        JsonUtils.writeObject("2.0.1", writer);
-//        JsonUtils.writeObject(request.getAttachment("path"), writer);
+        CompositeByteBuf dubboBuf = allocator.compositeBuffer(3);
+
+        ByteBuf beforeArgument = allocator.directBuffer(200);
+        ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
+
+        /*
+         before argument
+         */
+        JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
+        byteBufBeforeStream.writeByte('\n');
+
         FuncType funcType = request.getFuncType();
-        JsonUtils.writeObject(funcType.getInterfaceName(), writer);
-//        JsonUtils.writeObject(request.getAttachment("version"), writer);
-        JsonUtils.writeObject(null, writer);
-        JsonUtils.writeObject(funcType.getMethodName(), writer);
-        JsonUtils.writeObject(funcType.getParameterTypes(), writer);
+        JSON.writeJSONString(byteBufBeforeStream, funcType.getInterfaceName());
+        byteBufBeforeStream.writeByte('\n');
 
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        PrintWriter jsonwriter = new PrintWriter(new OutputStreamWriter(byteOut));
-        JsonUtils.writeObject(request.getArgument(), jsonwriter);
+        JSON.writeJSONString(byteBufBeforeStream,null);
+        byteBufBeforeStream.writeByte('\n');
+        JSON.writeJSONString(byteBufBeforeStream,funcType.getMethodName());
+        byteBufBeforeStream.writeByte('\n');
+        JSON.writeJSONString(byteBufBeforeStream,funcType.getParameterTypes());
+        byteBufBeforeStream.writeByte('\n');
+        byteBufBeforeStream.writeByte('"');
+         /*
+        after argument
+         */
+        ByteBuf afterArgument = allocator.directBuffer(50);
+        ByteBufOutputStream byteBufAfterStream = new ByteBufOutputStream(afterArgument);
+        byteBufAfterStream.writeByte('"');
+        byteBufAfterStream.writeByte('\n');
+        JSON.writeJSONString(byteBufAfterStream,request.getAttachments());
+        byteBufAfterStream.writeByte('\n');
 
-        JsonUtils.writeBytes(byteOut.toByteArray(), writer);
-
-        JsonUtils.writeObject(request.getAttachments(), writer);
-//        writer.print(String.format("{\"path\":\"%s\"\n}", funcType.getInterfaceName()));
-//        writer.flush();
-
-
+        dubboBuf.addComponent(true, beforeArgument);
+        dubboBuf.addComponent(true, request.getArgument());
+        dubboBuf.addComponent(true, afterArgument);
+        return dubboBuf;
     }
+
 
 }
