@@ -61,7 +61,7 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
         CompositeByteBuf requestBuff = ctx.alloc().compositeBuffer();
 
         // 写入data length
-        header.writeInt(body.readableBytes() + HEADER_LENGTH);
+        header.writeInt(body.readableBytes());
         requestBuff.addComponent(true, header);
         requestBuff.addComponent(true, body );
 

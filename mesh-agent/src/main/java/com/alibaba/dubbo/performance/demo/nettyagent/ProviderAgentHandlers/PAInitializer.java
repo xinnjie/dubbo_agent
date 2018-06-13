@@ -15,6 +15,10 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.logging.log4j.LogManager;
 
 
+import java.net.CacheRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,6 +29,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     private final CacheContext cacheContext;
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
     org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+    List<Channel> CAChannels = new ArrayList<>();
+    ChannelFuture providerChannelFuture = null;
+    Random random = new Random();
 
 
     public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
@@ -40,7 +47,13 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
-        ChannelFuture providerFuture =  bootstrapConnectToProvider(ch);
+        if (providerChannelFuture == null) {
+            providerChannelFuture = bootstrapConnectToProvider(ch.eventLoop());
+        }
+
+        synchronized (CAChannels) {
+            CAChannels.add(ch);
+        }
         p.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
         p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));
         p.addLast("requestDecoder", new CacheRequestDecoder(cacheContext, requestToMethodFirstCache));
@@ -48,26 +61,26 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
-        p.addLast("transmit2provider", new Transmit2provider(providerFuture));
+        p.addLast("transmit2provider", new Transmit2provider(providerChannelFuture));
 
     }
     /*
     PA 作为客户端向 Dubbo 请求的 pipeline 设置（右边）
      */
-    public ChannelFuture bootstrapConnectToProvider(SocketChannel leftChannel) {
+    public ChannelFuture bootstrapConnectToProvider(EventLoopGroup eventLoopGroup) {
         Bootstrap bootstrap = new Bootstrap()
-                .group(leftChannel.eventLoop())
+                .group(eventLoopGroup)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
-                         final Channel CAChannel = leftChannel;
-                         // (todo 高亮) PA 和 CA 的连接部分
+                         // PA 连接到 P
                          @Override
                          protected void initChannel(SocketChannel ch) throws Exception {
                              ChannelPipeline pipeline = ch.pipeline();
+//                             pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE * Integer.parseInt(System.getProperty("connection.num"))));
                              pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
@@ -75,7 +88,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      InvocationResponse response = (InvocationResponse) msg;
-                                     CAChannel.write(response);
+                                     selectCAChannel().write(response);
                                  }
                              });
                          }
@@ -86,5 +99,9 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
         return bootstrap.connect("127.0.0.1", port);
 
+    }
+
+    private  Channel selectCAChannel() {
+        return CAChannels.get(random.nextInt(CAChannels.size()));
     }
 }
