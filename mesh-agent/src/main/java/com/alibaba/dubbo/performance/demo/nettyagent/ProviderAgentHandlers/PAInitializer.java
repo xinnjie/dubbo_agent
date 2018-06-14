@@ -137,11 +137,16 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     }
 
     private  Channel selectCAChannel(int sequenceID) {
-        Channel CAChannel;
-        do {
-            int index = (sequenceID % (AgentConfig.SEND_ONCE * CAChannels.size()) ) / AgentConfig.SEND_ONCE;
-            CAChannel = CAChannels.get(index);
-        } while (!CAChannel.isActive());
-        return CAChannel;
+        Channel channel = CAChannels.get(sequenceID % CAChannels.size());
+        if (!channel.isActive()) {
+            logger.error("channel is not active {} ", channel);
+            return selectCAChannel(sequenceID + 1);
+        }
+        return channel;
+//        do {
+//            int index = (sequenceID % (AgentConfig.SEND_ONCE * CAChannels.size()) ) / AgentConfig.SEND_ONCE;
+//            CAChannel = CAChannels.get(index);
+//        } while (!CAChannel.isActive());
+//        return CAChannel;
     }
 }
