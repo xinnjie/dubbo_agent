@@ -93,7 +93,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             requestMessage.addComponent(true, funcInfo);
         }
         requestMessage.addComponent(true, request.getArgument());
-        logger.debug("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(requestMessage), cacheContext.getMethodIDs());
+//        logger.debug("sending request to PA: {}\n hexdump: {} , current methodsID cache: {}", request, ByteBufUtil.hexDump(requestMessage), cacheContext.getMethodIDs());
         ctx.write(requestMessage, promise);
     }
 

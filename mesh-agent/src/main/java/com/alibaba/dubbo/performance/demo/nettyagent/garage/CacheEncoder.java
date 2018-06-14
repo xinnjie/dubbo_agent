@@ -129,7 +129,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             out.writerIndex(startWriteIndex);
             out.writeBytes(header);
             out.writerIndex(totalIndex);
-            logger.debug("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
+//            logger.debug("sending request to PA: {}, hexdump: {} , current methodsID cache: {}", invocation, ByteBufUtil.hexDump(out), cacheContext.getMethodIDs());
 
             return;
         }
@@ -188,7 +188,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         out.writerIndex(startWriteIndex);
         out.writeBytes(header);
         out.writerIndex(totalIndex);
-        logger.debug("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
+//        logger.debug("sending response to CA: {} , hexdump: {}" , invocation, ByteBufUtil.hexDump(out));
 
     }
 

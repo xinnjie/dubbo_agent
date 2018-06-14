@@ -52,7 +52,7 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
         requestBuff.addComponent(true, header);
         requestBuff.addComponent(true, body );
 
-        logger.debug("PA sending to Provider, request: {}\nhexdump: {}",request, ByteBufUtil.hexDump(requestBuff));
+//        logger.debug("PA sending to Provider, request: {}\nhexdump: {}",request, ByteBufUtil.hexDump(requestBuff));
         ctx.write(requestBuff, promise);
     }
 

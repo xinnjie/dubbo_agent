@@ -111,7 +111,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex-startWriteIndex);
         out.writerIndex(totalIndex);
-        logger.debug("sending response to CA: {} , hexdump: {}" , response, ByteBufUtil.hexDump(out));
+//        logger.debug("sending response to CA: {} , hexdump: {}" , response, ByteBufUtil.hexDump(out));
 
     }
 

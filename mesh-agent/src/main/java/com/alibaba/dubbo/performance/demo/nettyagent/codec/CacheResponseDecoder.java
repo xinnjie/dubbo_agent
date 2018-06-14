@@ -73,7 +73,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+//        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -169,9 +169,13 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         "isValid: {}\n" +
                         "dataLength: {}\n" +
                         "bytebuf readable: {}\n" +
-                        "hexdump: {}\n" +
+//                        "hexdump: {}\n" +
                         "IndexOutOfBoundsException: {}", requestID, isRequest,isCached, isValid, dataLength ,
-                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+//                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+                byteBuf.readableBytes() , GetTraceString.get(e));
+
+
+
         byteBuf.clear();
     }
     private void handleError(String errorMessage, ByteBuf byteBuf, int savedReaderIndex) {
@@ -187,9 +191,10 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         "isCached: {}\n" +
                         "isValid: {}\n" +
                         "dataLength: {}\n" +
-                        "bytebuf readable: {}\n" +
-                        "hexdump: {}\n" , errorMessage, requestID, isRequest,isCached, isValid, dataLength ,
-                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf));
+                        "bytebuf readable: {}\n" , errorMessage, requestID, isRequest,isCached, isValid, dataLength ,
+//                byteBuf.readableBytes(), ByteBufUtil.hexDump(byteBuf));
+        byteBuf.readableBytes());
+
         byteBuf.clear();
     }
 }

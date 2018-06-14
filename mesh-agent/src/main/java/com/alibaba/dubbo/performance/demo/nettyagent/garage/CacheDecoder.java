@@ -76,9 +76,10 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                             "isCached: {}\n" +
                             "isValid: {}\n" +
                             "dataLength(协议中的域): {}\n" +
-                            "hexdump: {}\n" +
+//                            "hexdump: {}\n" +
                             "IndexOutOfBoundsException: {}", isRequest,isCached, isValid, dataLength ,
-                                                    ByteBufUtil.hexDump(byteBuf) , GetTraceString.get(e));
+//                                                    ByteBufUtil.hexDump(byteBuf) ,
+                            GetTraceString.get(e));
                     byteBuf.clear();
                 } catch (Exception e) {
                     throw e;
@@ -89,8 +90,8 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                     break;
                 } else if (msg == DecodeResult.DECODE_ERROR) {
                     byteBuf.readerIndex(savedReaderIndex);
-                    logger.error("Decode Error, the bytes received is {}",
-                            ByteBufUtil.hexDump(byteBuf));
+                    logger.error("Decode Error, the bytes received is {}");
+//                            ByteBufUtil.hexDump(byteBuf));
                     byteBuf.clear();
                 }else{
                     list.add(msg);
@@ -108,7 +109,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+//        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();

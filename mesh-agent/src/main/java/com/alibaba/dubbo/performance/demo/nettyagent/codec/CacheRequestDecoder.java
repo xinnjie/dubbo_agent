@@ -87,7 +87,7 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
         NEED_MORE_INPUT, SKIP_INPUT, DECODE_ERROR
     }
     private Object doDecode(ByteBuf byteBuf){
-        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
+//        logger.debug("received hexdump: {}", ByteBufUtil.hexDump(byteBuf));
 
 
         final int startIndex = byteBuf.readerIndex();
@@ -140,13 +140,13 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
             // 从缓存中取出有关方法信息：methodName, interfaceName, parameterTypes
             FuncType funcType = cacheContext.get(methodID);
             if (funcType == null) {
-                logger.error("method id {} is not cached, current cacheTable is {}, body hexdump(starts after methodiD): {}", methodID, cacheContext.getMethodIDs(), ByteBufUtil.hexDump(byteBuf));
+//                logger.error("method id {} is not cached, current cacheTable is {}, body hexdump(starts after methodiD): {}", methodID, cacheContext.getMethodIDs(), ByteBufUtil.hexDump(byteBuf));
                 return DecodeResult.DECODE_ERROR;
             }
             request.setFuncType(funcType);
             // todo 现在假设只有一个参数，以后改进
             if (byteBuf.readableBytes() < bodyLength) {
-                logger.error("body data length is not right: {}, body hexdum(starts after methodiD) : {}", bodyLength, ByteBufUtil.hexDump(byteBuf));
+//                logger.error("body data length is not right: {}, body hexdum(starts after methodiD) : {}", bodyLength, ByteBufUtil.hexDump(byteBuf));
                 return DecodeResult.DECODE_ERROR;
             }
 //            String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
@@ -174,8 +174,10 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
                         "isCache: {}\n" +
                         "isValid: {}\n" +
                         "requestID: {}\n" +
-                        "datalength: {}\n" +
-                        "hexdump: {}", parts, isCache, isValid, requestId, dataLength, ByteBufUtil.hexDump(byteBuf));
+                        "datalength: {}\n"
+//                        "hexdump: {}"
+                        , parts, isCache, isValid, requestId, dataLength);
+//                        ByteBufUtil.hexDump(byteBuf));
                 return DecodeResult.DECODE_ERROR;
             }
             FuncType newType = new FuncType();
