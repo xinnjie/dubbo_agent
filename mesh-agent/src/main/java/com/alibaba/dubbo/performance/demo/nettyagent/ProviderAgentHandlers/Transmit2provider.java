@@ -38,7 +38,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 //                    logger.debug("PA to Provider flush");
 //                    providerChannel.writeAndFlush(request);
 //                } else {
-                    providerChannel.write(request);
+                    providerChannel.writeAndFlush(request);
 //                }
 
             } else {

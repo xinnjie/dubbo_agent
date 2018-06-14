@@ -54,7 +54,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         synchronized (CAChannels) {
             CAChannels.add(ch);
         }
-        p.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
+//        p.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
         p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));
         p.addLast("requestDecoder", new CacheRequestDecoder(cacheContext, requestToMethodFirstCache));
 
@@ -81,14 +81,14 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                          protected void initChannel(SocketChannel ch) throws Exception {
                              ChannelPipeline pipeline = ch.pipeline();
 //                             pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE * Integer.parseInt(System.getProperty("connection.num"))));
-                             pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
+//                             pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
                              pipeline.addLast("DubboEncoder", new DubboRpcEncoder());
                              pipeline.addLast("DubboDecoder", new DubboRpcDecoder());
                              pipeline.addLast("send2CA", new ChannelInboundHandlerAdapter() {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      InvocationResponse response = (InvocationResponse) msg;
-                                     selectCAChannel().write(response);
+                                     selectCAChannel().writeAndFlush(response);
                                  }
                              });
                          }

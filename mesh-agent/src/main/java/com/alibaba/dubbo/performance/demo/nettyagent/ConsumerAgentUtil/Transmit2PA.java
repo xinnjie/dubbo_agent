@@ -32,7 +32,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         long requestID = Invocation.getUniqueRequestID();
         request.setRequestID(requestID);
         Channel PAChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
-        PAChannel.write(request);
+        PAChannel.writeAndFlush(request);
     }
 
 

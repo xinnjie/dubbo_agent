@@ -107,7 +107,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
+//                            pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
                             pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(endpoint)));
                             pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(endpoint)));
                             // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
