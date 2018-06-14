@@ -12,9 +12,9 @@ import org.apache.logging.log4j.LogManager;
  * Created by gexinjie on 2018/6/11.
  */
 public class Accumulator extends ChannelOutboundHandlerAdapter{
-    CompositeByteBuf accu;
     final int sendOnce;
-org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+    int count = 0;
+    org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public Accumulator(int sendOnce) {
@@ -25,15 +25,13 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         ByteBuf buf = (ByteBuf) msg;
 
-        if (accu == null) {
-            accu = ctx.alloc().compositeBuffer(this.sendOnce);
+        count++;
+        if (count == sendOnce) {
+            ctx.writeAndFlush(buf, promise);
+            count = 0;
+        } else {
+            ctx.write(buf, promise);
         }
-        accu.addComponent(true, buf);
-        if (accu.numComponents() == this.sendOnce) {
-            ctx.writeAndFlush(accu);
-            accu = null;
-        }
-        logger.debug("{}  count {} ", ctx.channel(), accu.numComponents());
 
     }
 }

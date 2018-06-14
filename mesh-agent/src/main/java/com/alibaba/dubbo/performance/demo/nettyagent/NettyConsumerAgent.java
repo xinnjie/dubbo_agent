@@ -53,6 +53,9 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
             waitProviderAgent();
             logger.debug("all providers has been found: {}", endpoints);
+            /*
+            connectManager 创建从 CA 到 PA 的连接，连接数由 PA 在 etcd 中注册的连接数量决定
+             */
             ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
             try {
                 ServerBootstrap b = new ServerBootstrap();

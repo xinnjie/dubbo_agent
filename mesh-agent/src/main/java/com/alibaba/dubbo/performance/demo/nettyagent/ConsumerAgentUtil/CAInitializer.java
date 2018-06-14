@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
  */
 public class CAInitializer extends ChannelInitializer<SocketChannel> {
     private final ConnectManager connectManager;
-org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+    org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
 
     public CAInitializer(ConnectManager manager) {
@@ -36,7 +36,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         ChannelPipeline p = ch.pipeline();
 
         p.addLast("httpCodec", new HttpServerCodec());
-        p.addLast("aggregator", new HttpObjectAggregator(10000));
+        p.addLast("aggregator", new HttpObjectAggregator(1400));
 
         /*
         这个当 consumer 传来请求时，将 HTTP POST 中内容提取出来构造一个 invocation，并写入到 PA 中

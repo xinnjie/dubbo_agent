@@ -17,9 +17,12 @@ import org.apache.logging.log4j.LogManager;
 
 import java.net.CacheRequest;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/6/1.
@@ -29,39 +32,70 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     private final CacheContext cacheContext;
     private final ConcurrentHashMap<Long, Integer> requestToMethodFirstCache;
     org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
-    List<Channel> CAChannels = new ArrayList<>();
-    ChannelFuture providerChannelFuture = null;
+    volatile List<Channel> CAChannels = new ArrayList<>();
+    ConcurrentLinkedQueue<Channel> actualCAChannels = new ConcurrentLinkedQueue<>();
+    Channel providerChannel = null;
     Random random = new Random();
+    AtomicInteger connectionCount = new AtomicInteger(0);
 
 
-    public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache) {
+    /*
+    在初始化阶段创建一个到 provider 的连接
+     */
+    public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache, EventLoopGroup eventLoopGroup, int connectionNum) {
         this.cacheContext = cacheContext;
         this.requestToMethodFirstCache = requestToMethodFirstCache;
+        try {
+            ChannelFuture providerChannelFuture = bootstrapConnectToProvider(eventLoopGroup).sync();
+            if (providerChannelFuture.isSuccess()) {
+                providerChannel = providerChannelFuture.channel();
+                logger.info("PA connected to provider: {}", providerChannel);
+            } else {
+                logger.error("PA can not connect to provider");
+            }
+        } catch (InterruptedException e) {
+            logger.error("connection interrupted", e);
+        }
     }
 
     /*
-        PA 作为服务器的 pipeline （左边）
-        PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
-        从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
-         */
+    PA 作为服务器的 pipeline （左边）
+    PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
+    从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
+     */
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline p = ch.pipeline();
-        if (providerChannelFuture == null) {
-            providerChannelFuture = bootstrapConnectToProvider(ch.eventLoop());
-        }
-
-        synchronized (CAChannels) {
-            CAChannels.add(ch);
-        }
 //        p.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
+        p.addLast("registerChannel", new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                super.channelActive(ctx);
+                actualCAChannels.add(ctx.channel());
+                connectionCount.incrementAndGet();
+                List<Channel> newList = new ArrayList<>(actualCAChannels);
+                Collections.shuffle(newList);
+                CAChannels = Collections.unmodifiableList(newList);
+                logger.info("PA connected to CA: {}\n new CA channels: {}", ctx.channel(), CAChannels);
+            }
+            @Override
+            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                super.channelInactive(ctx);
+                actualCAChannels.remove(ctx.channel());
+                connectionCount.decrementAndGet();
+                List<Channel> newList = new ArrayList<>(actualCAChannels);
+                Collections.shuffle(newList);
+                CAChannels = Collections.unmodifiableList(newList);
+                logger.warn("PA connection to CA is not active! {}\nnew CA channels: {}", ctx.channel(), CAChannels);
+            }
+        });
         p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));
         p.addLast("requestDecoder", new CacheRequestDecoder(cacheContext, requestToMethodFirstCache));
 
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
-        p.addLast("transmit2provider", new Transmit2provider(providerChannelFuture));
+        p.addLast("transmit2provider", new Transmit2provider(providerChannel));
 
     }
     /*
@@ -88,7 +122,8 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      InvocationResponse response = (InvocationResponse) msg;
-                                     selectCAChannel().writeAndFlush(response);
+                                     Channel comsumerChannel = selectCAChannel((int)response.getRequestID());
+                                     comsumerChannel.writeAndFlush(response);
                                  }
                              });
                          }
@@ -101,7 +136,12 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
     }
 
-    private  Channel selectCAChannel() {
-        return CAChannels.get(random.nextInt(CAChannels.size()));
+    private  Channel selectCAChannel(int sequenceID) {
+        Channel CAChannel;
+        do {
+            int index = (sequenceID % (AgentConfig.SEND_ONCE * CAChannels.size()) ) / AgentConfig.SEND_ONCE;
+            CAChannel = CAChannels.get(index);
+        } while (!CAChannel.isActive());
+        return CAChannel;
     }
 }

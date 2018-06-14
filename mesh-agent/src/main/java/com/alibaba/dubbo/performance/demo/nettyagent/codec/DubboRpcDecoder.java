@@ -132,8 +132,9 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         if (status == 20) {
             return response;
         }
-        logger.error("dubbo response received " + getStatusMessage(status));
-        return DecodeResult.SKIP_INPUT;
+        logger.error("dubbo response received {} , error message from dubbo: {}",  getStatusMessage(status), response.getResult());
+        response.setResult("000");
+        return response;
     }
 
     private String getStatusMessage(byte status) {

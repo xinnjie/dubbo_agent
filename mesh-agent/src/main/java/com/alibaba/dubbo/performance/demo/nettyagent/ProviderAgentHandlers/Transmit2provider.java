@@ -16,53 +16,30 @@ public class Transmit2provider extends ChannelInboundHandlerAdapter{
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 //    private AtomicInteger count = new AtomicInteger(0);
 
-    ChannelFuture providerChannelFuture;
+    Channel providerChannel;
 
-    public Transmit2provider(ChannelFuture providerChannelFuture) {
-        this.providerChannelFuture = providerChannelFuture;
+    public Transmit2provider(Channel providerChannel) {
+        this.providerChannel = providerChannel;
     }
 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         InvocationRequest request = (InvocationRequest) msg;
-
-        if (providerChannelFuture.isSuccess()) {
-            Channel providerChannel = providerChannelFuture.channel();
-            if (providerChannel.isActive()) {
-
+        if (providerChannel.isActive()) {
 //                        logger.debug("PA 向 provider 写入了 invocation，观察  cache encode 是否被调用了");
-                // 将收到的 request 发给 provider
+            // 将收到的 request 发给 provider
 //                boolean needToFlush = this.count.incrementAndGet() % AgentConfig.SEND_ONCE == 0;
 //                if (needToFlush) {
 //                    logger.debug("PA to Provider flush");
 //                    providerChannel.writeAndFlush(request);
 //                } else {
-                    providerChannel.writeAndFlush(request);
+                providerChannel.writeAndFlush(request);
 //                }
 
-            } else {
-                logger.error("connection to provider down! 并且还没有被恢复");
-            }
+        } else {
+            logger.error("connection to provider down! 并且还没有被恢复");
         }
-        else {
-              logger.error("connection to provider is not established");
-
-//            logger.debug("connection to provider is not established yet, add a listener");
-//            providerChannelFuture.addListener(new ChannelFutureListener() {
-//                @Override
-//                public void operationComplete(ChannelFuture future) throws Exception {
-//                    if (future.isSuccess()) {
-//                        logger.debug("connection to provider established，and listener is called");
-//                        Channel providerChannel = future.channel();
-//                        providerChannel.writeAndFlush(request);
-//                    } else {
-//                        logger.error("connection to provider failed error message: " + future.cause().getMessage());
-//                    }
-//                }
-//            });
-        }
-
-
     }
+
 }

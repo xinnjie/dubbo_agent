@@ -1,10 +1,12 @@
 package test;
 
+import com.alibaba.dubbo.performance.demo.nettyagent.codec.DubboRpcDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.codec.DubboRpcEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.Invocation;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.InvocationRequest;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Before;
@@ -79,7 +81,7 @@ public class DubboRpcTest {
 
 //    @Test
 //    public void dubboNormalDecode() throws Exception {
-//        String dubboResponseHex = "dabb061400000000000000200000000d310a2d3131343331323830310a";
+//        String dubboResponseHex = "dabb0664000000000009426c0000015d2253657276657220736964652831302e31302e31302e352c32303838302920746872656164706f6f6c20697320657868617573746564202c64657461696c206d73673a54687265616420706f6f6c206973204558484155535445442120546872656164204e616d653a20447562626f53657276657248616e646c65722d31302e31302e31302e353a32303838302c20506f6f6c2053697a653a2032303020286163746976653a203139352c20636f72653a203230302c206d61783a203230302c206c6172676573743a20323030292c205461736b3a203234323731352028636f6d706c657465643a20323432353139292c204578656375746f72207374617475733a28697353687574646f776e3a66616c73652c2069735465726d696e617465643a66616c73652c2069735465726d696e6174696e673a66616c7365292c20696e20647562626f3a2f2f31302e31302e31302e353a323038383021220a";
 //        // Invocation{methodName='null', parameterTypes='null', arguments='null', result='-114312801', requestID=32, methodID=-1}
 //        byte[] responseBytes = ByteBufUtil.decodeHexDump(dubboResponseHex);
 //        EmbeddedChannel dubboDecodeChannel = new EmbeddedChannel(
@@ -91,7 +93,7 @@ public class DubboRpcTest {
 //        assertEquals(response.getResult(), "-114312801");
 //        assertEquals(32, response.getRequestID());
 //    }
-//
+
 //    @Test
 //    public void dubboNullDecode() throws Exception {
 //        String dubboResponseHex = "dabbe6000000000000000007000000056e756c6c0a";

@@ -32,7 +32,11 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         long requestID = Invocation.getUniqueRequestID();
         request.setRequestID(requestID);
         Channel PAChannel = this.connectManger.getProviderChannel(ctx.channel(), requestID);
-        PAChannel.writeAndFlush(request);
+        if (PAChannel.isActive()) {
+            PAChannel.writeAndFlush(request);
+        } else {
+            logger.error("CA connection to PA is down: {}", PAChannel);
+        }
     }
 
 

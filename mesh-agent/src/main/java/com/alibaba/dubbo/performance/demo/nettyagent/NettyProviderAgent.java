@@ -62,7 +62,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
-                        .childHandler(new PAInitializer(cacheContext, requestToMethodFirstCache));
+                        .childHandler(new PAInitializer(cacheContext, requestToMethodFirstCache, workerGroup, Integer.parseInt(System.getProperty("connection.num"))));
 
                 Channel ch = b.bind().sync().channel();
                 logger.debug("bound to port " + agentPort);

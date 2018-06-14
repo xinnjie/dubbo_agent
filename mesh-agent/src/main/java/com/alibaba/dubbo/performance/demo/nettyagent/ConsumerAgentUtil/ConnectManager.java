@@ -146,7 +146,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                     if (!future.isSuccess()) {
                         logger.error("connection to " + future.toString() + " not established");
                     } else {
-                        logger.debug("connection to " + pair.getKey().toString() + " is established");
+                        logger.info("connection to PA is established :{}", future.channel());
                         this.endpoint2Channel.get(pair.getKey()).add(future.channel());
                         this.PAChannels.add(future.channel());
                     }
@@ -171,11 +171,10 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
      * @return
      */
     public Channel getProviderChannel(Channel consumerChannel, long requestID) {
-        int count = this.count.incrementAndGet();
+        int count = (int)requestID;
         this.request2CAChannel.put(requestID, consumerChannel);
         int channelIndex = (count % (AgentConfig.SEND_ONCE * PAChannels.size()) ) / AgentConfig.SEND_ONCE;
         Channel selected = PAChannels.get(channelIndex);
-//        return new AbstractMap.SimpleImmutableEntry<>(selected, flush);
         return selected;
     }
 
