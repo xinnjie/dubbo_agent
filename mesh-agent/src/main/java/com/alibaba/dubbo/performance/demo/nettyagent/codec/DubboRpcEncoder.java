@@ -22,6 +22,8 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
     protected  static final int REQEUST_ID_INDEX = 4;
     protected  static final int DATA_LENGTH_INDEX = 12;
     org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
+    private ByteBuf beforeArgument;
+    private ByteBuf afterArgument;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -34,11 +36,7 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
         // set request and serialization flag.
         // 6 是 fastjson
         byte flag = (byte) (FLAG_REQUEST | 6);
-
-//        if (req.isTwoWay()) header[2] |= FLAG_TWOWAY;   // true
         flag |= FLAG_TWOWAY;
-
-//        if (req.isEvent()) header[2] |= FLAG_EVENT;    // false
         header.writeByte(flag);
         header.writeByte(0);
         // set request id.
@@ -62,35 +60,41 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
 
         CompositeByteBuf dubboBuf = allocator.compositeBuffer(3);
 
-        ByteBuf beforeArgument = allocator.directBuffer(200);
-        ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
+        if (beforeArgument == null) {
+            beforeArgument = allocator.directBuffer(200);
+            ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
 
         /*
          before argument
          */
-        JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
-        byteBufBeforeStream.writeByte('\n');
+            JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
+            byteBufBeforeStream.writeByte('\n');
 
-        FuncType funcType = request.getFuncType();
-        JSON.writeJSONString(byteBufBeforeStream, funcType.getInterfaceName());
-        byteBufBeforeStream.writeByte('\n');
+            FuncType funcType = request.getFuncType();
+            JSON.writeJSONString(byteBufBeforeStream, funcType.getInterfaceName());
+            byteBufBeforeStream.writeByte('\n');
 
-        JSON.writeJSONString(byteBufBeforeStream,null);
-        byteBufBeforeStream.writeByte('\n');
-        JSON.writeJSONString(byteBufBeforeStream,funcType.getMethodName());
-        byteBufBeforeStream.writeByte('\n');
-        JSON.writeJSONString(byteBufBeforeStream,funcType.getParameterTypes());
-        byteBufBeforeStream.writeByte('\n');
-        byteBufBeforeStream.writeByte('"');
+            JSON.writeJSONString(byteBufBeforeStream, null);
+            byteBufBeforeStream.writeByte('\n');
+            JSON.writeJSONString(byteBufBeforeStream, funcType.getMethodName());
+            byteBufBeforeStream.writeByte('\n');
+            JSON.writeJSONString(byteBufBeforeStream, funcType.getParameterTypes());
+            byteBufBeforeStream.writeByte('\n');
+            byteBufBeforeStream.writeByte('"');
+        }
          /*
         after argument
          */
-        ByteBuf afterArgument = allocator.directBuffer(50);
-        ByteBufOutputStream byteBufAfterStream = new ByteBufOutputStream(afterArgument);
-        byteBufAfterStream.writeByte('"');
-        byteBufAfterStream.writeByte('\n');
-        JSON.writeJSONString(byteBufAfterStream,request.getAttachments());
-        byteBufAfterStream.writeByte('\n');
+        if (afterArgument == null) {
+            afterArgument = allocator.directBuffer(50);
+            ByteBufOutputStream byteBufAfterStream = new ByteBufOutputStream(afterArgument);
+            byteBufAfterStream.writeByte('"');
+            byteBufAfterStream.writeByte('\n');
+            JSON.writeJSONString(byteBufAfterStream, request.getAttachments());
+            byteBufAfterStream.writeByte('\n');
+        }
+        afterArgument.retain();
+        beforeArgument.retain();
 
         dubboBuf.addComponent(true, beforeArgument);
         dubboBuf.addComponent(true, request.getArgument());

@@ -13,6 +13,7 @@ public class InvocationRequest {
     FuncType funcType;
     ByteBuf argument;
     long requestID = -1;
+    int methodID = -1;
 
     public InvocationRequest(ByteBuf argument, String interfaceName, String methodName, String parameterTypes) {
         this.argument = argument;
@@ -20,6 +21,14 @@ public class InvocationRequest {
     }
 
     public InvocationRequest() {
+    }
+
+    public int getMethodID() {
+        return methodID;
+    }
+
+    public void setMethodID(int methodID) {
+        this.methodID = methodID;
     }
 
     public void setFuncType(FuncType funcType) {

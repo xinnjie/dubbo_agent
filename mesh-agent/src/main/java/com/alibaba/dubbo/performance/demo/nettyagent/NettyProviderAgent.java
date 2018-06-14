@@ -58,7 +58,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                         .childOption(ChannelOption.SO_KEEPALIVE, true)
                         .childOption(ChannelOption.TCP_NODELAY, true)
-//                        .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
+//                        .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024*8, 1024*32))
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
