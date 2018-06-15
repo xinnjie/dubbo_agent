@@ -25,7 +25,7 @@ elif [[ "$1" == "provider-small" ]]; then
        -Dtype=provider \
        -Ddubbo.protocol.port=20880 \
        -Dserver.port=30000 \
-       -Dconnection.num=2 \
+       -Dconnection.num=3 \
        -Detcd.url=$ETCD_URL \
        -Dlogs.dir=/root/logs \
        -Dworker.threads=1 \
