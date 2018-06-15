@@ -129,6 +129,11 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                                         logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
                                     }
                                 }
+
+                                @Override
+                                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                                    logger.error("CA to PA connection is down: {}", ctx.channel());
+                                }
                             });
                         }
                     });
@@ -173,7 +178,6 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     public Channel getProviderChannel(Channel consumerChannel, long requestID) {
         int count = (int)requestID;
         this.request2CAChannel.put(requestID, consumerChannel);
-//        int channelIndex = (count % (AgentConfig.SEND_ONCE * PAChannels.size()) ) / AgentConfig.SEND_ONCE;
         Channel selected = PAChannels.get(count % PAChannels.size());
         return selected;
     }

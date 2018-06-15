@@ -41,7 +41,7 @@ public class CAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         这个当 consumer 传来请求时，将 HTTP POST 中内容提取出来构造一个 invocation，并写入到 PA 中
          */
-        p.addLast("http2invocation", new Http2Request());
+        p.addLast("http2request", new Http2Request());
         // Transmit2PA 必须把 invocation 的 requestID 传给 connectManager
         p.addLast("transmit2PA", new Transmit2PA(connectManager));
 

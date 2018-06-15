@@ -11,6 +11,8 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.ByteProcessor;
 import org.apache.logging.log4j.LogManager;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -181,9 +183,16 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
                 return DecodeResult.DECODE_ERROR;
             }
             FuncType newType = new FuncType();
-            newType.setMethodName(parts[0]);
-            newType.setParameterTypes(parts[1]);
-            newType.setInterfaceName(parts[2]);
+//            newType.setMethodName(parts[0]);
+//            newType.setParameterTypes(parts[1]);
+//            newType.setInterfaceName(parts[2]);
+            try {
+            newType.setMethodName(URLDecoder.decode(parts[0], "utf-8"));
+            newType.setParameterTypes(URLDecoder.decode(parts[1], "utf-8"));
+            newType.setInterfaceName(URLDecoder.decode(parts[2], "utf-8"));
+            } catch (UnsupportedEncodingException e) {
+                logger.error("encoding not supported", e);
+            }
             ByteBuf argument = byteBuf.retainedSlice(byteBuf.readerIndex(), bodyLength-Funcbody.length());
             request.setArgument(argument);
             request.setFuncType(newType);

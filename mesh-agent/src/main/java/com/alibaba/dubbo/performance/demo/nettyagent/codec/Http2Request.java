@@ -71,16 +71,20 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             String content = byteBuf.readCharSequence(endIndex - beginIndex, Charset.forName("utf-8")).toString();
             try {
                 switch (count) {
+                    // fixme 为减轻 consumer 负担（减少一次 String 的生成），对 http keyvalue 不进行解码，解码让 PA 完成
                     case 0: {
+//                        funcType.setInterfaceName(URLDecoder.decode(content, "utf-8"));
                         funcType.setInterfaceName(URLDecoder.decode(content, "utf-8"));
+
                         break;
                     }
                     case 1: {
-                        funcType.setMethodName(URLDecoder.decode(content, "utf-8"));
+//                        funcType.setMethodName(URLDecoder.decode(content, "utf-8"));
+                        funcType.setMethodName(content);
                         break;
                     }
                     case 2: {
-                        funcType.setParameterTypes(URLDecoder.decode(content, "utf-8"));
+                        funcType.setParameterTypes(content);
                         break;
                     }
                     default: {

@@ -121,19 +121,17 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
          q: 前面去掉一个换行为什么要 +2， 而不是 +1
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
-        byte[] body = new byte[bodyLength];
-        byteBuf.readBytes(body);
 
-        byte[] subArray = Arrays.copyOfRange(body,2, body.length -1 );
-
-        InvocationResponse response = new InvocationResponse(new String(subArray));
+        ByteBuf result = byteBuf.retainedSlice(byteBuf.readerIndex() + 2, bodyLength-2);
+        byteBuf.readerIndex(savedReaderIndex + totalLength);
+        InvocationResponse response = new InvocationResponse(result);
         response.setRequestID(requestID);
         logger.debug("PA received response from provider: {}", response);
         if (status == 20) {
             return response;
         }
         logger.error("dubbo response received {} , error message from dubbo: {}",  getStatusMessage(status), response.getResult());
-        response.setResult("000");
+        response.setResult(null);
         return response;
     }
 

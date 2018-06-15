@@ -20,7 +20,7 @@ public class Result2Http extends ChannelOutboundHandlerAdapter{
         InvocationResponse invocation = (InvocationResponse) msg;
         // todo 这里用了 unpooled 的 heap buffer
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
-                Unpooled.wrappedBuffer(invocation.getResult().getBytes()));
+                invocation.getResult());
         response.headers().set(CONTENT_TYPE, "text/plain");
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
         ctx.write(response);

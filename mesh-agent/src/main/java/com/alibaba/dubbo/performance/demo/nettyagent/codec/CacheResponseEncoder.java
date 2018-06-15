@@ -106,7 +106,8 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             out.writeCharSequence(funcType.getInterfaceName()+ "\n", Charset.forName("utf-8"));
 
         }
-        out.writeCharSequence(response.getResult()+"\n", Charset.forName("utf-8"));
+        out.writeBytes(response.getResult());
+//        out.writeCharSequence(response.getResult(), Charset.forName("utf-8"));
         int totalIndex = out.writerIndex();
         out.writerIndex(startWriteIndex + DATA_LENGTH_INDEX);
         out.writeInt(totalIndex-startWriteIndex);
