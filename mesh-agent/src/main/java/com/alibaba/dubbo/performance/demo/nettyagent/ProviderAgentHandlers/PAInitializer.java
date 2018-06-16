@@ -34,6 +34,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     volatile List<Channel> CAChannels = new ArrayList<>();
     ConcurrentLinkedQueue<Channel> actualCAChannels = new ConcurrentLinkedQueue<>();
+    ConcurrentHashMap<Long, Channel> returnCAchannel = new ConcurrentHashMap<>();
     Channel providerChannel = null;
     Random random = new Random();
     AtomicInteger connectionCount = new AtomicInteger(0);
@@ -95,7 +96,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
         /*
         当读取到 CA 的 request 数据后，将读到的 invocation 写入 provider 去
          */
-        p.addLast("transmit2provider", new Transmit2provider(providerChannel));
+        p.addLast("transmit2provider", new Transmit2provider(providerChannel, returnCAchannel));
 
     }
     /*
@@ -122,7 +123,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                                  @Override
                                  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                                      InvocationResponse response = (InvocationResponse) msg;
-                                     Channel comsumerChannel = selectCAChannel((int)response.getRequestID());
+                                     Channel comsumerChannel = selectCAChannel(response.getRequestID());
                                      comsumerChannel.writeAndFlush(response);
                                  }
                              });
@@ -136,11 +137,11 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
     }
 
-    private  Channel selectCAChannel(int sequenceID) {
-        Channel channel = CAChannels.get(sequenceID % CAChannels.size());
-        if (!channel.isActive()) {
+    private  Channel selectCAChannel(Long requestid) {
+        Channel channel = returnCAchannel.get(requestid);
+        if (channel == null || !channel.isActive()) {
             logger.error("channel is not active {} ", channel);
-            return selectCAChannel(sequenceID + 1);
+            return CAChannels.get(random.nextInt(CAChannels.size()));
         }
         return channel;
 //        do {

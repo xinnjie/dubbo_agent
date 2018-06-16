@@ -11,11 +11,14 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import org.apache.logging.log4j.EventLogger;
 import org.apache.logging.log4j.LogManager;
 
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,14 +33,10 @@ public class ConnectManager {
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     static final Random random = new Random();
     private final Map<Endpoint, Integer> endpointsAndPortion;
-    private List<Channel> PAChannels = new ArrayList<>();
-    //    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
-    // TODO  request2CAChannel 可以进行优化
-    // 使用桶装的容器，桶内设n 个板子，对 requestID 进行分流，减少修改时的阻塞
+//    private List<Channel> PAChannels = new ArrayList<>();
+    private HashMap<EventLoop, List<Channel>> PAchannelFromEventloop = new HashMap<>();
     final private ConcurrentHashMap<Long, Channel> request2CAChannel= new ConcurrentHashMap<>();
-
-    final AtomicInteger count = new AtomicInteger(0);
-
+    
     /*
     语义上讲这两份 cache 是属于 CA 的
      */
@@ -52,32 +51,51 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
     private void initVariables() {
         // 对每个 PA 发起两条连接，按照 portion 数量加权轮询,初始化 cacheContexts 变量
-        int connectionsPerPA = 8;
+        int connectionsPerPA = 4;
         cacheContexts = new HashMap<>();
+
+        EventLoop startLoop = this.eventLoopGroup.next();
+        this.PAchannelFromEventloop.put(startLoop, new ArrayList<>());
+        for (EventLoop loop = this.eventLoopGroup.next(); !loop.equals(startLoop); loop = this.eventLoopGroup.next()) {
+            this.PAchannelFromEventloop.put(loop, new ArrayList<>());
+        }
+        int eventLoopSize = this.PAchannelFromEventloop.size();
+
         for (Endpoint PAendpoint :
                 this.endpointsAndPortion.keySet()) {
             cacheContexts.put(PAendpoint, new CacheContext());
-            for (int i = 0; i < connectionsPerPA; i++) {
-                Channel thePAchannel = connectToPA(PAendpoint);
-                if (thePAchannel == null) {
-                    logger.error("CA to PA connection not established!");
-                } else {
-                    for (int j = 0; j < this.endpointsAndPortion.get(PAendpoint)/connectionsPerPA; j++) {
-                        PAChannels.add(thePAchannel);
+            // this.PAchannelFromEventloop.size() 为 eventloop 的数量，对每个 PA 的连接数分散到各个 eventloop 中去,
+            // 所以 connectionsPerPA / this.PAchannelFromEventloop.size() 为每个 eventloop 中连接数量
+            for (EventLoop loop : this.PAchannelFromEventloop.keySet()) {
+                int connectionsPerEventloop = connectionsPerPA / eventLoopSize;
+                for (int i = 0; i < connectionsPerEventloop; i++) {
+                    Channel thePAchannel = connectToPA(PAendpoint, loop);
+                    if (thePAchannel == null) {
+                        logger.error("CA to PA connection not established!");
+                    } else {
+                        for (int j = 0; j < this.endpointsAndPortion.get(PAendpoint) / eventLoopSize / connectionsPerEventloop; j++) {
+                            this.PAchannelFromEventloop.get(loop).add(thePAchannel);
+                        }
                     }
                 }
             }
         }
-        Collections.shuffle(PAChannels);
-        PAChannels = Collections.unmodifiableList(PAChannels);
+
+        for (EventLoop loop: this.PAchannelFromEventloop.keySet()) {
+            List<Channel> channels = this.PAchannelFromEventloop.get(loop);
+            Collections.shuffle(channels);
+            this.PAchannelFromEventloop.replace(loop, Collections.unmodifiableList(channels));
+        }
+
+        logger.info("CA to PA connection portion info: {}", this.PAchannelFromEventloop);
     }
 
 
     @Nullable
-    private Channel connectToPA(Endpoint PAendpoint) {
+    private Channel connectToPA(Endpoint PAendpoint, EventLoop eventLoop) {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.channel(NioSocketChannel.class)
-                .group(this.eventLoopGroup)
+                .group(eventLoop)
                 .option(ChannelOption.SO_KEEPALIVE, true)
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
@@ -117,8 +135,9 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     public Channel getProviderChannel(Channel consumerChannel, long requestID) {
         int count = (int)requestID;
         this.request2CAChannel.put(requestID, consumerChannel);
-        Channel selected = PAChannels.get(count % PAChannels.size());
-        return selected;
+        List<Channel> PAchannels = PAchannelFromEventloop.get(consumerChannel.eventLoop());
+        int index = (count / PAchannelFromEventloop.size()) %  PAchannels.size();
+        return PAchannels.get(index);
     }
 
 

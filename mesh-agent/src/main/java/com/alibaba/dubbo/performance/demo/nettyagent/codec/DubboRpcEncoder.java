@@ -60,13 +60,13 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
 
         CompositeByteBuf dubboBuf = allocator.compositeBuffer(3);
 
+        /*
+         before argument
+         */
         if (beforeArgument == null) {
             beforeArgument = allocator.directBuffer(200);
             ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
 
-        /*
-         before argument
-         */
             JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
             byteBufBeforeStream.writeByte('\n');
 
