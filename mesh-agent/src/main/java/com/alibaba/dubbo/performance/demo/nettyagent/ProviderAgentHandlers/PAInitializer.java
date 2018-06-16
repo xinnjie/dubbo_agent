@@ -42,7 +42,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
     /*
     在初始化阶段创建一个到 provider 的连接
      */
-    public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache, EventLoopGroup eventLoopGroup, int connectionNum) {
+    public PAInitializer(CacheContext cacheContext, ConcurrentHashMap<Long, Integer> requestToMethodFirstCache, EventLoopGroup eventLoopGroup) {
         this.cacheContext = cacheContext;
         this.requestToMethodFirstCache = requestToMethodFirstCache;
         try {
@@ -60,7 +60,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
 
     /*
     PA 作为服务器的 pipeline （左边）
-    PA 左边连接到 CA 的 channel 设置，包括收到消息自动转发给 Provider
+    PA 左边连接到 CA 的 channel 设置，包括一步收到消息自动转发给 Provider
     从 CA 到 PA 的连接保持固定，PA 每次收到 CA 的连接就也发起一个到 provider 的连接
      */
     @Override
@@ -86,7 +86,7 @@ public class PAInitializer extends ChannelInitializer<SocketChannel> {
                 List<Channel> newList = new ArrayList<>(actualCAChannels);
                 Collections.shuffle(newList);
                 CAChannels = Collections.unmodifiableList(newList);
-                logger.warn("CA connection to CA is not active! {}\nnew CA channels: {}", ctx.channel(), CAChannels);
+                logger.warn("PA connection to CA is not active! {}\nnew CA channels: {}", ctx.channel(), CAChannels);
             }
         });
         p.addLast("responseEncoder", new CacheResponseEncoder(cacheContext, requestToMethodFirstCache));

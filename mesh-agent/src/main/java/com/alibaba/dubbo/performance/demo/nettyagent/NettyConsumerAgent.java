@@ -19,11 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by gexinjie on 2018/5/28.
@@ -33,8 +29,8 @@ public class NettyConsumerAgent {
     static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), 0);
 
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
-    Map<Endpoint, Integer> endpoints;
-//    private List<Endpoint> endpoints = Collections.unmodifiableList(Arrays.asList(
+    Map<Endpoint, Integer> endpointsAndPortion;
+//    private List<Endpoint> endpointsAndPortion = Collections.unmodifiableList(Arrays.asList(
 //            new Endpoint("provider-large",30000),
 //            new Endpoint("provider-medium",30000),
 //            new Endpoint("provider-small",30000)));
@@ -49,14 +45,14 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             // Configure the server.
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup(workThreadsNum);
-            endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+            endpointsAndPortion = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
 
             waitProviderAgent();
-            logger.debug("all providers has been found: {}", endpoints);
+            logger.debug("all providers has been found: {}", endpointsAndPortion);
             /*
             connectManager 创建从 CA 到 PA 的连接，连接数由 PA 在 etcd 中注册的连接数量决定
              */
-            ConnectManager connectManager = new ConnectManager(workerGroup, endpoints);
+            ConnectManager connectManager = new ConnectManager(workerGroup, endpointsAndPortion);
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -84,7 +80,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     private void waitProviderAgent() {
         boolean scanning=true;
 
-        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
+        for (Map.Entry<Endpoint, Integer> entry : this.endpointsAndPortion.entrySet()) {
             Endpoint endpoint = entry.getKey();
             while (scanning) {
                 Socket sock = new Socket();

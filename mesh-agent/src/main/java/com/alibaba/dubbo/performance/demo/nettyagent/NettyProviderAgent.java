@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NettyProviderAgent {
     static final int agentPort = Integer.parseInt(System.getProperty("server.port"));
-    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), Integer.parseInt(System.getProperty("connection.num")));
+    static final IRegistry registry = new EtcdRegistry(System.getProperty("etcd.url"), Integer.parseInt(System.getProperty("portion")));
 
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
 
@@ -50,7 +50,6 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
             CacheContext cacheContext = new CacheContext();
             ConcurrentHashMap<Long, Integer>  requestToMethodFirstCache = new ConcurrentHashMap<>();
-
             try {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
@@ -62,7 +61,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         .channel(NioServerSocketChannel.class)
                         .localAddress(new InetSocketAddress(agentPort))
                         .handler(new LoggingHandler(LogLevel.WARN))
-                        .childHandler(new PAInitializer(cacheContext, requestToMethodFirstCache, workerGroup, Integer.parseInt(System.getProperty("connection.num"))));
+                        .childHandler(new PAInitializer(cacheContext, requestToMethodFirstCache, workerGroup));
 
                 Channel ch = b.bind().sync().channel();
                 logger.debug("bound to port " + agentPort);

@@ -1,24 +1,21 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.model;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-
 /**
  * Created by gexinjie on 2018/6/10.
  */
 public class InvocationResponse {
     FuncType funcType;
-    ByteBuf result;
+    String result;
     long requestID = -1;
 
-    public InvocationResponse(ByteBuf result) {
+    public InvocationResponse(String result) {
         this.result = result;
     }
 
     public InvocationResponse() {
     }
 
-    public void setResult(ByteBuf result) {
+    public void setResult(String result) {
         this.result = result;
     }
 
@@ -30,7 +27,7 @@ public class InvocationResponse {
         this.funcType = funcType;
     }
 
-    public ByteBuf getResult() {
+    public String getResult() {
         return result;
     }
 

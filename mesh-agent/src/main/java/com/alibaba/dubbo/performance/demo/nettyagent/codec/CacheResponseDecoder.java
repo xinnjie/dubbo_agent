@@ -6,7 +6,6 @@ import com.alibaba.dubbo.performance.demo.nettyagent.util.CacheContext;
 import com.alibaba.dubbo.performance.demo.nettyagent.util.GetTraceString;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
@@ -133,16 +132,21 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                     } else {
                         logger.warn("method is already in cache, before: {}, after: {}", cacheContext.get(methodID), newType);
                     }
-                    response.setResult(Unpooled.wrappedBuffer(parts[3].getBytes()));
+                    response.setResult(parts[3]);
                     cacheContext.put(methodID, newType);
                 } else {
                     logger.error("can not decode. to few parts (should be 4 parts): {}", parts);
                     return DecodeResult.DECODE_ERROR;
                 }
             } else {
-                ByteBuf result = byteBuf.readRetainedSlice(bodyLength-1);
-                byteBuf.skipBytes(1);
-                response.setResult(result);
+                String body = byteBuf.readCharSequence(bodyLength, Charset.forName("utf-8")).toString();
+                String[] parts = body.split("\n");
+                assert parts.length >= 1;
+                if (parts.length < 1) {
+                    logger.error("can not decode. to few parts (should be 1 parts): {}", parts);
+                    return DecodeResult.DECODE_ERROR;
+                }
+                response.setResult(parts[0]);
             }
         }
         logger.debug("CA received response from PA: " + response);

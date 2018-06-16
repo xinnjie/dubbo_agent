@@ -1,8 +1,5 @@
 package com.alibaba.dubbo.performance.demo.nettyagent.ConsumerAgentUtil;
 
-import com.alibaba.dubbo.performance.demo.nettyagent.Accumulator;
-import com.alibaba.dubbo.performance.demo.nettyagent.AgentConfig;
-import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheRequestEncoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.codec.CacheResponseDecoder;
 import com.alibaba.dubbo.performance.demo.nettyagent.model.FuncType;
@@ -17,6 +14,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.logging.log4j.LogManager;
 
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,10 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConnectManager {
     private final EventLoopGroup eventLoopGroup;
 org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
-    private List<Endpoint> weightedEndpoints = null;
     static final Random random = new Random();
-    private final Map<Endpoint, Integer> endpoints;
-    private HashMap<Endpoint, List<Channel>> endpoint2Channel = new HashMap<>();
+    private final Map<Endpoint, Integer> endpointsAndPortion;
     private List<Channel> PAChannels = new ArrayList<>();
     //    final private Map<Long, Channel> request2CAChannel= Collections.synchronizedMap(new HashMap<>());
     // TODO  request2CAChannel 可以进行优化
@@ -48,118 +44,78 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     private HashMap<Endpoint, CacheContext> cacheContexts = null;
     private HashMap<Endpoint, ConcurrentHashMap<Integer, FuncType>> endpointMethods = null;
 
-    public ConnectManager(EventLoopGroup eventLoopGroup, Map<Endpoint, Integer> endpoints) {
+    public ConnectManager(EventLoopGroup eventLoopGroup, Map<Endpoint, Integer> endpointsAndPortion) {
         this.eventLoopGroup = eventLoopGroup;
-        this.endpoints = endpoints;
+        this.endpointsAndPortion = endpointsAndPortion;
         initVariables();
-        initConnectToPA();
     }
 
     private void initVariables() {
-        /*
-         初始化 endpoint2Channel
-         */
-        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
-            this.endpoint2Channel.put(entry.getKey(), new ArrayList<>());
-        }
-
-
-        weightedEndpoints = new ArrayList<>();
-        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
-            for (int i = 0; i < entry.getValue(); i++) {
-                weightedEndpoints.add(entry.getKey());
+        // 对每个 PA 发起两条连接，按照 portion 数量加权轮询,初始化 cacheContexts 变量
+        cacheContexts = new HashMap<>();
+        for (Endpoint PAendpoint :
+                this.endpointsAndPortion.keySet()) {
+            cacheContexts.put(PAendpoint, new CacheContext());
+            for (int i = 0; i < 2; i++) {
+                Channel thePAchannel = connectToPA(PAendpoint);
+                if (thePAchannel == null) {
+                    logger.error("CA to PA connection not established!");
+                } else {
+                    for (int j = 0; j < this.endpointsAndPortion.get(PAendpoint); j++) {
+                        PAChannels.add(thePAchannel);
+                    }
+                }
             }
         }
-        weightedEndpoints = Collections.unmodifiableList(weightedEndpoints);
-
-        cacheContexts = new HashMap<>();
-        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
-            cacheContexts.put(entry.getKey(), new CacheContext());
-        }
+        Collections.shuffle(PAChannels);
+        PAChannels = Collections.unmodifiableList(PAChannels);
     }
 
-    /**
-     * 一次性创建所有到 PA 的连接, 总个数和权重和决定
-     * CA 右侧的连接们
-     * 负责收到 PA 的回应后，编码为 invocation后发回给 consumer
-     *
-     * option:
-     *   *** 尝试了一下这条路不通 A<->B 这种情况可以用 watermark 聚集数据
-     *   但是 A->B->C
-     *              | 这种就没办法触发下一级的 inbound handler
-     *        A<-B<-C
-     *    ChannelOption.WRITE_BUFFER_HIGH_WATER_MARK 和 channelWritabilityChanged() 配合进行对发送数据的聚集，而不是每次收到一条 invocation 就发送，减少 socket send 的调用次数
-     */
-    private void initConnectToPA() {
-        HashMap<Endpoint, List<ChannelFuture>> PAChannelFutures = new HashMap<>();
-        for (Map.Entry<Endpoint, Integer> entry : this.endpoints.entrySet()) {
-            PAChannelFutures.put(entry.getKey(), new ArrayList<>());
-        }
-        for (Endpoint endpoint : weightedEndpoints) {
-            Bootstrap bootstrap = new Bootstrap();
-            bootstrap.channel(NioSocketChannel.class)
-                    .group(this.eventLoopGroup)
-                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.TCP_NODELAY, true)
-                    .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-//                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(600, 1200))
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ChannelPipeline pipeline = ch.pipeline();
-//                            pipeline.addLast("accumulator", new Accumulator(AgentConfig.SEND_ONCE));
-                            pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(endpoint)));
-                            pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(endpoint)));
-                            // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
-                            pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
-                                /*
-                                dubbo 返回的response，能使用的包括：返回值，request ID
-                                todo 是哪里 consumerChannel 需要在运行channelRead 这个方法时决定，而不是在初始化时就决定。
-                                 */
-                                @Override
-                                public void channelRead(ChannelHandlerContext ctx_, Object msg) throws Exception {
-                                    InvocationResponse response = (InvocationResponse) msg;
-                                    // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
-                                    Channel consumerChannel = getAccordingConsumerChannel(response.getRequestID());
-                                    if (consumerChannel != null) {
-                                        logger.debug("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
-                                        // 将来自 PA 的 response 发回给 Consumer
-                                        consumerChannel.writeAndFlush(response);
-                                    } else {
-                                        logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
-                                    }
+
+    @Nullable
+    private Channel connectToPA(Endpoint PAendpoint) {
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.channel(NioSocketChannel.class)
+                .group(this.eventLoopGroup)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .option(ChannelOption.TCP_NODELAY, true)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ChannelPipeline pipeline = ch.pipeline();
+                        pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(PAendpoint)));
+                        pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(PAendpoint)));
+                        // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
+                        pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
+                            /*
+                            dubbo 返回的response，能使用的包括：返回值，request ID
+                            todo 是哪里 consumerChannel 需要在运行channelRead 这个方法时决定，而不是在初始化时就决定。
+                             */
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx_, Object msg) throws Exception {
+                                InvocationResponse response = (InvocationResponse) msg;
+                                // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
+                                Channel consumerChannel = getAccordingConsumerChannel(response.getRequestID());
+                                if (consumerChannel != null) {
+                                    logger.debug("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
+                                    // 将来自 PA 的 response 发回给 Consumer
+                                    consumerChannel.writeAndFlush(response);
+                                } else {
+                                    logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
                                 }
-
-                                @Override
-                                public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                                    logger.error("CA to PA connection is down: {}", ctx.channel());
-                                }
-                            });
-                        }
-                    });
-
-            PAChannelFutures.get(endpoint).add(bootstrap.connect(endpoint.getHost(), endpoint.getPort()));
-        }
-
-        /*
-        等待所有 channel 都连接上，并加进 this.endpoint2Channel, this.PAChannels
-         */
-        for (Map.Entry<Endpoint, List<ChannelFuture>> pair : PAChannelFutures.entrySet()) {
-            for (ChannelFuture future: pair.getValue())
-                try {
-                    future.sync();
-                    if (!future.isSuccess()) {
-                        logger.error("connection to " + future.toString() + " not established");
-                    } else {
-                        logger.info("connection to PA is established :{}", future.channel());
-                        this.endpoint2Channel.get(pair.getKey()).add(future.channel());
-                        this.PAChannels.add(future.channel());
+                            }
+                        });
                     }
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage());
-                }
+                });
+        try {
+            Channel channel = bootstrap.connect(PAendpoint.getHost(), PAendpoint.getPort()).sync().channel();
+            logger.info("CA connected to PA: {}", channel);
+            return channel;
+        } catch (InterruptedException e) {
+            logger.error(e);
         }
-        Collections.shuffle(this.PAChannels);
+        return null;
     }
 
     private Channel getAccordingConsumerChannel(long requestID) {

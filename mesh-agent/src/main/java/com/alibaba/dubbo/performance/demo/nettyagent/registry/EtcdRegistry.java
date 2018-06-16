@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -27,7 +25,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
     private KV kv;
     private long leaseId;
 
-    public EtcdRegistry(String registryAddress, int maxConnectionNum) {
+    public EtcdRegistry(String registryAddress, int portion) {
         Client client = Client.builder().endpoints(registryAddress).build();
         this.lease   = client.getLeaseClient();
         this.kv      = client.getKVClient();
@@ -44,7 +42,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             // 如果是provider，去etcd注册服务
             try {
                 int port = Integer.valueOf(System.getProperty("server.port"));
-                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port, maxConnectionNum);
+                register("com.alibaba.dubbo.performance.demo.provider.IHelloService",port, portion);
             } catch (Exception e) {
                 e.printStackTrace();
             }

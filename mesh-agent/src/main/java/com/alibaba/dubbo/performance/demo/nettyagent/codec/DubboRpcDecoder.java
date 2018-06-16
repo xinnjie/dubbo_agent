@@ -9,6 +9,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import org.apache.logging.log4j.LogManager;
 
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -121,9 +122,9 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
          q: 前面去掉一个换行为什么要 +2， 而不是 +1
          a: 还要额外去掉一个代表返回值类型的字节， RESPONSE_NULL_VALUE - 2, RESPONSE_VALUE - 1, RESPONSE_WITH_EXCEPTION - 0
         */
+        byteBuf.skipBytes(2);
+        String result = byteBuf.readCharSequence(bodyLength-2, Charset.forName("utf-8")).toString();
 
-        ByteBuf result = byteBuf.retainedSlice(byteBuf.readerIndex() + 2, bodyLength-2);
-        byteBuf.readerIndex(savedReaderIndex + totalLength);
         InvocationResponse response = new InvocationResponse(result);
         response.setRequestID(requestID);
         logger.debug("PA received response from provider: {}", response);
@@ -131,7 +132,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
             return response;
         }
         logger.error("dubbo response received {} , error message from dubbo: {}",  getStatusMessage(status), response.getResult());
-        response.setResult(null);
+        response.setResult("000");
         return response;
     }
 
