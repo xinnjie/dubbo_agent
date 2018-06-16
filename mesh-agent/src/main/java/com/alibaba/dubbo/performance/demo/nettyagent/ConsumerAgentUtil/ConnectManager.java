@@ -52,16 +52,17 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
 
     private void initVariables() {
         // 对每个 PA 发起两条连接，按照 portion 数量加权轮询,初始化 cacheContexts 变量
+        int connectionsPerPA = 8;
         cacheContexts = new HashMap<>();
         for (Endpoint PAendpoint :
                 this.endpointsAndPortion.keySet()) {
             cacheContexts.put(PAendpoint, new CacheContext());
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < connectionsPerPA; i++) {
                 Channel thePAchannel = connectToPA(PAendpoint);
                 if (thePAchannel == null) {
                     logger.error("CA to PA connection not established!");
                 } else {
-                    for (int j = 0; j < this.endpointsAndPortion.get(PAendpoint); j++) {
+                    for (int j = 0; j < this.endpointsAndPortion.get(PAendpoint)/connectionsPerPA; j++) {
                         PAChannels.add(thePAchannel);
                     }
                 }
@@ -87,25 +88,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
                         pipeline.addLast("RequestEncoder", new CacheRequestEncoder(cacheContexts.get(PAendpoint)));
                         pipeline.addLast("ResponseDecoder", new CacheResponseDecoder(cacheContexts.get(PAendpoint)));
                         // 当读入 PA 的返回结果时，继续引发 CA 写结果回 consumer      C <-- CA <-- PA （时间开始事件为 CA 读入PA的返回结果）
-                        pipeline.addLast("WriteToConsumer", new ChannelInboundHandlerAdapter() {
-                            /*
-                            dubbo 返回的response，能使用的包括：返回值，request ID
-                            todo 是哪里 consumerChannel 需要在运行channelRead 这个方法时决定，而不是在初始化时就决定。
-                             */
-                            @Override
-                            public void channelRead(ChannelHandlerContext ctx_, Object msg) throws Exception {
-                                InvocationResponse response = (InvocationResponse) msg;
-                                // getAccordingConsumerChannel 将会返回对应于 reqeustID 的 consumerChannel （ps *****requestID 和 consumerChannel有对应关系）
-                                Channel consumerChannel = getAccordingConsumerChannel(response.getRequestID());
-                                if (consumerChannel != null) {
-                                    logger.debug("received result from PA， find the right consumer channel for request " + response.getRequestID() + ": " + consumerChannel.toString());
-                                    // 将来自 PA 的 response 发回给 Consumer
-                                    consumerChannel.writeAndFlush(response);
-                                } else {
-                                    logger.error("request ID: {}  is duplicated! 肯定还有问题", response.getRequestID());
-                                }
-                            }
-                        });
+                        pipeline.addLast("WriteToConsumer", new PATransmit2CA(ConnectManager.this));
                     }
                 });
         try {
@@ -118,7 +101,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         return null;
     }
 
-    private Channel getAccordingConsumerChannel(long requestID) {
+    public Channel getAccordingConsumerChannel(long requestID) {
         Channel consumerChannel = this.request2CAChannel.get(requestID);
         if (consumerChannel == null) {
             logger.error("request not in request table, maybe already processed? requestID is :" + requestID);
