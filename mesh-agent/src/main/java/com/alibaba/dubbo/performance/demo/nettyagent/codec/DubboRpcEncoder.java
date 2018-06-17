@@ -10,6 +10,9 @@ import io.netty.channel.ChannelPromise;
 import org.apache.logging.log4j.LogManager;
 
 public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
+
+    protected static final int INTIAL_METHODID = -1;
+
     // header length.
     protected static final int HEADER_LENGTH = 16;
     // magic header.
@@ -24,11 +27,12 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
     org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LOGGER_NAME);
     private ByteBuf beforeArgument;
     private ByteBuf afterArgument;
+    private int lastCachedMethod = INTIAL_METHODID;
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         InvocationRequest request = (InvocationRequest) msg;
-
+        assert request.getMethodID() != INTIAL_METHODID;
         ByteBuf header = ctx.alloc().directBuffer(HEADER_LENGTH, HEADER_LENGTH);
 
         // set magic number.
@@ -60,39 +64,9 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
 
         CompositeByteBuf dubboBuf = allocator.compositeBuffer(3);
 
-        /*
-         before argument
-         */
-        if (beforeArgument == null) {
-            beforeArgument = allocator.directBuffer(200);
-            ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
 
-            JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
-            byteBufBeforeStream.writeByte('\n');
+        getBeforeAfter(allocator, request);
 
-            FuncType funcType = request.getFuncType();
-            JSON.writeJSONString(byteBufBeforeStream, funcType.getInterfaceName());
-            byteBufBeforeStream.writeByte('\n');
-
-            JSON.writeJSONString(byteBufBeforeStream, null);
-            byteBufBeforeStream.writeByte('\n');
-            JSON.writeJSONString(byteBufBeforeStream, funcType.getMethodName());
-            byteBufBeforeStream.writeByte('\n');
-            JSON.writeJSONString(byteBufBeforeStream, funcType.getParameterTypes());
-            byteBufBeforeStream.writeByte('\n');
-            byteBufBeforeStream.writeByte('"');
-        }
-         /*
-        after argument
-         */
-        if (afterArgument == null) {
-            afterArgument = allocator.directBuffer(50);
-            ByteBufOutputStream byteBufAfterStream = new ByteBufOutputStream(afterArgument);
-            byteBufAfterStream.writeByte('"');
-            byteBufAfterStream.writeByte('\n');
-            JSON.writeJSONString(byteBufAfterStream, request.getAttachments());
-            byteBufAfterStream.writeByte('\n');
-        }
         afterArgument.retain();
         beforeArgument.retain();
 
@@ -102,5 +76,50 @@ public class DubboRpcEncoder extends ChannelOutboundHandlerAdapter{
         return dubboBuf;
     }
 
+    /*
+    用来获取 argument 前面后后面的部分，结果保存在变量 beforeArgument和afterArgument中
+     */
+    private void getBeforeAfter(ByteBufAllocator allocator, InvocationRequest request) throws  Exception{
+        if (lastCachedMethod != INTIAL_METHODID && lastCachedMethod == request.getMethodID()) {
+            return;
+        }
+
+         /*
+         before argument
+         */
+        if (beforeArgument != null) {
+            beforeArgument.release();
+        }
+        if (afterArgument != null) {
+            afterArgument.release();
+        }
+        lastCachedMethod = request.getMethodID();
+        beforeArgument = allocator.directBuffer(200);
+        ByteBufOutputStream byteBufBeforeStream = new ByteBufOutputStream(beforeArgument);
+
+        JSON.writeJSONString(byteBufBeforeStream, "2.0.1");
+        byteBufBeforeStream.writeByte('\n');
+
+        FuncType funcType = request.getFuncType();
+        JSON.writeJSONString(byteBufBeforeStream, funcType.getInterfaceName());
+        byteBufBeforeStream.writeByte('\n');
+
+        JSON.writeJSONString(byteBufBeforeStream, null);
+        byteBufBeforeStream.writeByte('\n');
+        JSON.writeJSONString(byteBufBeforeStream, funcType.getMethodName());
+        byteBufBeforeStream.writeByte('\n');
+        JSON.writeJSONString(byteBufBeforeStream, funcType.getParameterTypes());
+        byteBufBeforeStream.writeByte('\n');
+        byteBufBeforeStream.writeByte('"');
+         /*
+        after argument
+         */
+        afterArgument = allocator.directBuffer(50);
+        ByteBufOutputStream byteBufAfterStream = new ByteBufOutputStream(afterArgument);
+        byteBufAfterStream.writeByte('"');
+        byteBufAfterStream.writeByte('\n');
+        JSON.writeJSONString(byteBufAfterStream, request.getAttachments());
+        byteBufAfterStream.writeByte('\n');
+    }
 
 }

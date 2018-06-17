@@ -48,6 +48,7 @@ public class DubboRpcTest {
         funcType.setMethodName("hash");
         request.setArgument(Unpooled.wrappedBuffer(arguments.getBytes()));
         request.setFuncType(funcType);
+        request.setMethodID(methodID);
 
         dubboEncodeChannel = new EmbeddedChannel(
                 new DubboRpcEncoder()

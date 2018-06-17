@@ -99,6 +99,7 @@ org.apache.logging.log4j.Logger logger = LogManager.getLogger(LogManager.ROOT_LO
         out.writerIndex(startWriteIndex + METHOD_ID_INDEX);
 
         if (isValid) {
+            logger.error("not error, just to inform response to CA is embedded with funcinfo, this step is costy");
             out.writeInt(cachedMethodID);
             FuncType funcType = response.getFuncType();
             out.writeCharSequence(funcType.getMethodName()+ "\n", Charset.forName("utf-8"));

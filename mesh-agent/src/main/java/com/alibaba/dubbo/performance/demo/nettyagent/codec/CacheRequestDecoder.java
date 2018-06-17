@@ -139,6 +139,7 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
         int methodID;
         if (isCache) {
             methodID = byteBuf.readInt();
+            request.setMethodID(methodID);
             // 从缓存中取出有关方法信息：methodName, interfaceName, parameterTypes
             FuncType funcType = cacheContext.get(methodID);
             if (funcType == null) {
@@ -202,7 +203,10 @@ public class CacheRequestDecoder extends ByteToMessageDecoder {
                 int newMethodID = Invocation.getUniqueMethodID();
                 this.cacheContext.put(newMethodID, newType);
                 this.requestToMethodFirstCache.put(request.getRequestID(), newMethodID);
+                request.setMethodID(newMethodID);
                 logger.debug("new functype insert into PA cache: {}", newType);
+            } else {
+                request.setMethodID(this.cacheContext.get(newType));
             }
         }
         logger.debug("received from CA: {}", request);
